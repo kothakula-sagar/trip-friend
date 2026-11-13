@@ -18,7 +18,7 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Trip Friend","url":"https://kothakula-sagar.github.io/trip-friend/","description":"Interactive no-login group trip app demo with a bill splitter, sample friend locations, chat and photo album."}</script>
 </head>
 <body>
-<header class="header wrap"><a class="brand" href="./"><span>↗</span> Trip Friend</a><nav aria-label="Main navigation"><a href="#features">Features</a><a href="#faq">FAQ</a><a class="button small" href="./app.html">Open demo ↗</a></nav></header>
+<header class="header wrap"><a class="brand" href="./"><span>↗</span> Trip Friend</a><nav aria-label="Main navigation"><a href="#features">Features</a><a href="#install">Install</a><a href="#faq">FAQ</a><a class="button small" href="./app.html">Open demo ↗</a></nav></header>
 <main>
 <section class="hero wrap">
 <div><p class="eyebrow">THE GROUP TRIP COMPANION</p><h1>Good trips.<br><em>Better together.</em></h1><p class="intro">Split the hotel bill, find the friend who took the scenic route, and keep the trip’s photos in one place.</p><div class="actions"><a class="button" href="./app.html">Try the free demo ↗</a><a class="plain" href="#features">Explore features ↓</a></div><p class="subtle">No sign-up. Try it with a sample trip.</p></div>
@@ -30,6 +30,12 @@
 <article><span class="symbol">≋</span><h3>Keep the group in the loop</h3><p>Try group messages, vote in a breakfast poll, and preview voice and call alerts. The live product is designed around tap-to-join calls and push alerts on supported devices.</p><a href="./app.html#chat">Open the group chat →</a></article>
 <article><span class="symbol">▧</span><h3>Collect trip photos</h3><p>Add a photo with a caption and view it in the album. Demo photos stay on this device. Shared cloud albums are planned for the connected version.</p><a href="./app.html#album">Open the photo album →</a></article>
 </div></section>
+<section class="section wrap" id="install">
+<p class="eyebrow">INSTALL FROM THIS WEBSITE</p><h2>Take Trip Friend with you.</h2>
+<div class="grid"><article class="card"><h3>Android</h3><p>Open this site in Chrome and tap Install Trip Friend. If the install prompt is unavailable, open Chrome’s menu and choose Install app or Add to Home screen.</p></article>
+<article class="card"><h3>iPhone</h3><p>Open this site in Safari. Tap Share, then Add to Home Screen. Open Trip Friend from its icon when you’re ready.</p></article></div>
+<div class="actions"><button id="install-app" type="button">Install Trip Friend</button><a href="./app.html">Continue in browser</a></div><p id="install-status" role="status"></p>
+</section>
 <section class="section wrap" id="faq"><p class="eyebrow">GETTING STARTED</p><h2>A few things to know.</h2>
 <details><summary>How do I start a trip?</summary><p>Open the demo to enter a sample trip with five friends. In the planned connected app, a trip creator can invite friends, plan stops, pin announcements, and close the trip.</p></details>
 <details><summary>Can I install Trip Friend on my phone?</summary><p>On Android, open the site in Chrome and use its install or home screen option when available. On iPhone, open it in Safari, tap Share, then Add to Home Screen. You can also use the browser directly.</p></details>
@@ -39,6 +45,6 @@
 </section>
 <section class="wrap end"><h2>Take the sample trip for a spin.</h2><a class="button" href="./app.html">Open Trip Friend ↗</a></section>
 </main>
-<footer class="wrap header"><a class="brand" href="./">Trip Friend</a><span>Interactive preview · No account required</span></footer>
-<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});</script>
+<footer class="wrap header"><a class="brand" href="./">Trip Friend</a><span>Interactive preview · Version <span data-version></span></span></footer>
+<script defer src="./release.js"></script>
 </body></html>

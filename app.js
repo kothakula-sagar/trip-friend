@@ -31,7 +31,7 @@ function paise(value) {
 }
 function navigate() {
   const wanted = location.hash.slice(1);
-  const id = ['expenses','map','chat','album'].includes(wanted) ? wanted : 'expenses';
+  const id = ['expenses','map','chat','album','packing','trip'].includes(wanted) ? wanted : 'expenses';
   document.querySelectorAll('.panel').forEach(panel => { panel.hidden = panel.id !== id; });
   document.querySelectorAll('.tabs a').forEach(link => {
     if (link.hash === '#' + id) link.setAttribute('aria-current', 'page');
@@ -45,6 +45,7 @@ const form = $('bill');
 for (const name of names) {
   form.elements.payer.add(new Option(name));
   $('actor').add(new Option(name));
+  $('closure-actor').add(new Option(name));
   const label = element('label', ' ' + name);
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
@@ -165,6 +166,7 @@ form.addEventListener('change', event => {
 });
 form.addEventListener('submit', event => {
   event.preventDefault();
+  if (state.closure?.requested) return say('Expenses are locked during trip completion.');
   const split = calculate();
   if (split.error) { say(split.error); return; }
   const title = form.elements.title.value.trim();
@@ -206,6 +208,7 @@ function renderBills() {
         state.payments[id] = {status,rejected};
         if (save()) say(status === 'Due' ? 'Payment rejected. The balance is due again.' : 'Payment status updated to ' + status.toLowerCase() + '.');
         renderBills();
+        renderClosure();
         $('actor').focus();
       };
       if (actor === name && payment.status === 'Due') actions.append(button('Mark as paid', () => setPayment('Awaiting confirmation')));
@@ -259,6 +262,7 @@ function renderMessages() {
 }
 $('message').addEventListener('submit', event => {
   event.preventDefault();
+  if (state.closure?.closed) return say('This trip is closed and read-only.');
   const text = event.target.elements.text.value.trim();
   if (!text) return;
   state.messages.push({name:'Sagar',text});
@@ -272,6 +276,7 @@ function renderVote() {
   document.querySelectorAll('[data-vote]').forEach(option => option.setAttribute('aria-pressed', String(option.dataset.vote === state.vote)));
 }
 document.querySelectorAll('[data-vote]').forEach(option => option.addEventListener('click', () => {
+  if (state.closure?.closed) return say('This trip is closed and read-only.');
   state.vote = option.dataset.vote;
   save();
   renderVote();
@@ -301,6 +306,7 @@ function renderPhotos() {
 }
 $('photo').addEventListener('submit', event => {
   event.preventDefault();
+  if (state.closure?.closed) return say('This trip is closed and read-only.');
   const file = event.target.elements.photo.files[0];
   if (!file || !['image/jpeg','image/png','image/webp','image/gif'].includes(file.type) || file.size > 2000000) {
     say('Choose a JPEG, PNG, WebP or GIF photo under 2 MB.');
@@ -309,6 +315,7 @@ $('photo').addEventListener('submit', event => {
   const caption = event.target.elements.caption.value.trim();
   const reader = new FileReader();
   reader.onload = () => {
+    if (state.closure?.closed) return say('This trip is closed and read-only.');
     state.photos.unshift({url:reader.result,caption});
     if (save()) say('Photo saved to this browser.');
     event.target.reset();
@@ -318,4 +325,81 @@ $('photo').addEventListener('submit', event => {
   reader.readAsDataURL(file);
 });
 renderPhotos();
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+
+const suggestedPacking = ['Phone charger', 'Power bank and cable', 'Offline route and booking details', 'Water bottle', 'First-aid kit', 'Rain jacket'];
+state.packing ??= suggestedPacking.map(name => ({name, checked:false}));
+state.closure ??= {requested:false, confirmed:[], closed:false};
+function renderPacking() {
+  $('packing-list').replaceChildren(...state.packing.map(item => {
+    const label = element('label', ' ' + item.name);
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = item.checked;
+    checkbox.disabled = state.closure.closed;
+    checkbox.addEventListener('change', () => { item.checked = checkbox.checked; save(); });
+    label.prepend(checkbox);
+    return label;
+  }));
+}
+$('packing-form').addEventListener('submit', event => {
+  event.preventDefault();
+  if (state.closure.closed) return say('This trip is closed and read-only.');
+  const name = event.target.elements.item.value.trim();
+  if (!name) return;
+  state.packing.push({name, checked:false});
+  save();
+  event.target.reset();
+  renderPacking();
+});
+function pendingRepayments() {
+  return state.bills.reduce((total, bill) => total + names.filter(name =>
+    name !== bill.payer && bill.shares[name] > 0 &&
+    state.payments[bill.id + ':' + name]?.status !== 'Settled'
+  ).length, 0);
+}
+function renderClosure() {
+  const closure = state.closure;
+  const view = $('closure');
+  const actor = $('closure-actor').value;
+  const pending = pendingRepayments();
+  view.replaceChildren();
+  for (const control of form.elements) control.disabled = closure.requested || (control.name === 'amount' && form.elements.mode.value === 'items');
+  for (const id of ['message','photo','packing-form']) {
+    for (const control of $(id).elements) control.disabled = closure.closed;
+  }
+  document.querySelectorAll('[data-vote]').forEach(control => { control.disabled = closure.closed; });
+  $('sharing').disabled = closure.closed;
+  if (closure.closed) {
+    view.append(element('p', 'Trip closed · Read-only', 'notice'));
+    return;
+  }
+  if (!closure.requested) {
+    view.append(element('p', pending ? pending + ' repayment(s) still need confirmation.' : 'All repayments are settled.', 'notice'));
+    if (actor === 'Satvik' && !pending) {
+      view.append(button('Request trip completion', () => {
+        if (pendingRepayments()) return;
+        closure.requested = true;
+        save();
+        say('Demo notification sent to all five friends.');
+        renderClosure();
+      }));
+    }
+    return;
+  }
+  view.append(element('p', 'Upload any remaining photos, then confirm you’re done.', 'notice'));
+  names.forEach(name => view.append(element('div', name + ' · ' + (closure.confirmed.includes(name) ? 'Done' : 'Waiting'), 'line')));
+  if (!closure.confirmed.includes(actor)) {
+    view.append(button('I’m done', () => {
+      closure.confirmed.push(actor);
+      closure.closed = names.every(name => closure.confirmed.includes(name));
+      if (closure.closed) sharing = false;
+      save();
+      renderClosure();
+      renderPacking();
+    }));
+  }
+}
+form.addEventListener('submit', renderClosure);
+$('closure-actor').addEventListener('change', renderClosure);
+renderPacking();
+renderClosure();
