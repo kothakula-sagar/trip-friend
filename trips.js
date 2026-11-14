@@ -1,17 +1,40 @@
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js';
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,sendEmailVerification,signOut,reload,getIdToken,sendSignInLinkToEmail,isSignInWithEmailLink,signInWithEmailLink,updatePassword,verifyBeforeUpdateEmail,reauthenticateWithCredential,EmailAuthProvider} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
-import {getFirestore,collection,addDoc,doc,query,where,limit,orderBy,onSnapshot,serverTimestamp,updateDoc,arrayUnion,getDocFromServer,getDoc,setDoc,writeBatch,or,getDocs,deleteDoc} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js';
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,addDoc,doc,query,where,limit,orderBy,onSnapshot,serverTimestamp,updateDoc,arrayUnion,getDocFromServer,getDoc,setDoc,writeBatch,or,getDocs,deleteDoc} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js';
 import {createTripMap} from './trip-map.js';
+import {createRealTrip} from './real-trip.js';
 import {firebaseConfig} from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-if (window.Capacitor?.isNativePlatform?.()) {
-  document.querySelector('.native-trips-back').hidden = false;
-  window.Capacitor.Plugins.App.addListener('backButton',() => { location.href = './app.html#home'; });
-}
 const requestedTrip = new URL(location.href).searchParams.get('open');
-const db = getFirestore(app);
+const db = initializeFirestore(app, window.TripShell.native ? {
+  localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})
+} : {});
+const real = createRealTrip({
+  subscribe: (id,path,field,direction,update,error) => onSnapshot(
+    query(collection(db,'trips',id,path),orderBy(field,direction),limit(100)),
+    snapshot => update(snapshot.docs.map(item => ({...item.data(),id:item.id}))),error),
+  write: (id,path,data,key) => key
+    ? setDoc(doc(db,'trips',id,path,key),{...data,updatedAt:serverTimestamp()})
+    : addDoc(collection(db,'trips',id,path),{...data,createdAt:serverTimestamp()}),
+  erase: (id,path,key) => deleteDoc(doc(db,'trips',id,path,key)),
+  identity: () => auth.currentUser,
+  openTrip: id => {
+    const found = tripRows.find(trip => trip.id === id);
+    if (found && selected !== id) displayTrip(found);
+  },
+  showList: () => {
+    if (!window.TripShell.native && !selected) return;
+    stopExpenses?.();
+    selected = null;
+    showTripMap(null);
+    real.select(null);
+    $('detail').hidden = true;
+    $('real-trip-list').hidden = false;
+    $('trip-empty').hidden = window.TripShell.native;
+  }
+});
 const meetingPoint = id => doc(db,'trips',id,'map','meeting');
 const showTripMap = createTripMap({
   listen: (id,change,error) => onSnapshot(meetingPoint(id),snapshot => change(snapshot.data()),error),
@@ -102,7 +125,24 @@ submit('auth-form',async (fields,action) => {
   }
   $('auth-form').reset();
 });
-$('sign-out').onclick = () => signOut(auth).catch(showError);
+$('sign-out').onclick = () => {
+  real.stopLocation();
+  signOut(auth).catch(showError);
+};
+$('real-sign-out').onclick = () => $('sign-out').click();
+if (window.TripShell.native) {
+  const openLink = url => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === 'tripfriend:' && parsed.hostname === 'trip' && /^\/[A-Za-z0-9]{20}$/.test(parsed.pathname)) real.go(parsed.pathname.slice(1));
+    } catch {}
+  };
+  const plugin = window.Capacitor.Plugins.App;
+  plugin.addListener('appUrlOpen',event => openLink(event.url));
+  plugin.addListener('appStateChange',event => { if (!event.isActive) real.stopLocation(); });
+  plugin.getLaunchUrl().then(event => { if (event?.url) openLink(event.url); }).catch(() => {});
+}
+
 $('send-email').onclick = async () => {
   try { await sendEmailVerification(auth.currentUser); status('Verification email sent.'); }
   catch (error) { showError(error); }
@@ -119,12 +159,15 @@ $('check-email').onclick = async () => {
 function showSession(user) {
   stopTrips?.();
   stopExpenses?.();
+  real.select(null);
+  $('real-trip-list').hidden = false;
+  $('real-sign-out').hidden = !user;
   selected = null;
   showTripMap(null);
   tripRows = [];
   $('trip-list').replaceChildren();
   $('detail').hidden = true;
-  $('trip-empty').hidden = !user?.emailVerified;
+  $('trip-empty').hidden = window.TripShell.native || !user?.emailVerified;
   $('list-status').textContent = user?.emailVerified ? 'Loading trips…' : '';
   $('account').hidden = !!user || linkInProgress;
   $('settings').hidden = !user?.emailVerified || linkInProgress;
@@ -169,17 +212,19 @@ function showSession(user) {
         date.textContent = 'Created '+new Intl.DateTimeFormat('en-IN',{dateStyle:'medium'}).format(created);
         button.append(date);
       }
-      button.onclick = () => displayTrip(trip);
+      button.onclick = () => { if (window.TripShell.native) real.go(trip.id); else displayTrip(trip); };
       li.append(button);
       return li;
     }));
     if (!tripRows.length) $('trip-list').append(row('No private trips yet.'));
-    const current = tripRows.find(trip => trip.id === (selected || requestedTrip));
-    if (current) displayTrip(current);
+    const current = tripRows.find(trip => trip.id === (window.TripShell.route().id || selected || requestedTrip));
+    if (current) { if (window.TripShell.native && !window.TripShell.route().id) real.go(current.id); else displayTrip(current); }
     else if (selected) {
       stopExpenses?.();
       selected = null;
       showTripMap(null);
+      real.select(null);
+      $('real-trip-list').hidden = false;
       $('detail').hidden = true;
       $('trip-empty').hidden = false;
     }
@@ -197,7 +242,9 @@ submit('create-trip',async fields => {
   $('create-trip').reset();
   const current = tripRows.find(item => item.id === trip.id);
   try {
-    displayTrip(current || await getDocFromServer(trip));
+    const created = current || await getDocFromServer(trip);
+    if (window.TripShell.native) real.go(created.id);
+    displayTrip(created);
     status('Trip created.', 'success');
   } catch (error) {
     showError(error, 'Trip saved, but could not be opened');
@@ -209,6 +256,8 @@ function displayTrip(trip) {
   const data = trip.data();
   const admin = data.ownerUid === auth.currentUser.uid;
   showTripMap(trip.id,admin);
+  real.select({id:trip.id,name:data.name,admin,closed:data.status === 'closed' || data.closed === true});
+  $('real-trip-list').hidden = window.TripShell.native;
   const share = $('native-share-trip');
   const nativeShare = window.Capacitor?.Plugins?.Share;
   share.hidden = !window.Capacitor?.isNativePlatform?.() || !nativeShare;

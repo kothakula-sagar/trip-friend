@@ -23,6 +23,7 @@ export function createTripMap({listen,save,remove}) {
   const directions = document.getElementById('map-directions');
   const clear = document.getElementById('remove-pin');
   const locate = document.getElementById('locate-map');
+  let crewMarkers = [], crewPositions = [];
   let trip, admin, map, marker, stop, saved, draft, generation = 0;
   const valid = (lat,lng) => Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
   function render(center = false) {
@@ -50,6 +51,19 @@ export function createTripMap({listen,save,remove}) {
     render();
     status.textContent = 'Pin selected. Give it a name and save it for the crew.';
   }
+  function renderCrew() {
+    crewMarkers.forEach(marker => marker.remove());
+    crewMarkers = [];
+    if (!map) return;
+    for (const point of crewPositions) {
+      const caption = document.createElement('span');
+      caption.textContent = point.label+' · '+Math.round(point.accuracy)+' m accuracy';
+      crewMarkers.push(window.L.circleMarker([point.lat,point.lng],{
+        radius:10,color:'#fff',fillColor:'#0E8F63',fillOpacity:1,weight:2
+      }).addTo(map).bindPopup(caption));
+    }
+  }
+  document.addEventListener('trip-presence',event => { crewPositions = event.detail; renderCrew(); });
   async function open() {
     if (!trip || !panel.open) return;
     const active = generation;
@@ -64,6 +78,7 @@ export function createTripMap({listen,save,remove}) {
         map.on('click',event => { if (admin) choose(event.latlng.lat,event.latlng.wrap().lng); });
       }
       map.invalidateSize();
+      renderCrew();
       render(true);
     } catch {
       if (active === generation) status.textContent = 'Could not load the map. Reopen this section to retry.';

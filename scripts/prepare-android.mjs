@@ -4,11 +4,11 @@ import {existsSync} from 'node:fs';
 await rm('www',{recursive:true,force:true});
 await mkdir('www');
 const files = ['app.html','app.js','aurora.css','icons.svg','crown.svg','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest','release.js',
-  'trips.html','trips.js','trip-map.js','firebase-config.js','help.html','help.js','android-shell.css','android-shell.js'];
+  'trips.html','trips.js','trip-map.js','firebase-config.js','help.html','help.js','android-shell.css','android-shell.js','real-trip.js'];
 for (const file of files) await copyFile(file,'www/'+file);
 await cp('photos','www/photos',{recursive:true});
 await writeFile('www/android-config.json',JSON.stringify({push:existsSync('google-services.json')}));
-await writeFile('www/index.html','<!doctype html><html lang="en"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=app.html#home"><title>Trip Friend</title><a href="app.html#home">Open Trip Friend</a></html>');
+await writeFile('www/index.html','<!doctype html><html lang="en"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=trips.html#trips"><title>Trip Friend</title><a href="trips.html#trips">Open Trip Friend</a></html>');
 if (!existsSync('android/app/build.gradle')) process.exit(0);
 
 const metadata = JSON.parse(await readFile('release.json','utf8'));

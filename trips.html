@@ -1,19 +1,20 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex"><title>Private trips · Trip Friend</title>
 <link rel="icon" href="./crown.svg"><link rel="stylesheet" href="./aurora.css">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script type="module" src="./trips.js"></script>
+<link rel="stylesheet" href="./android-shell.css"><script defer src="./android-shell.js"></script><script type="module" src="./trips.js"></script>
 </head>
 <body class="trips-page"><div class="mesh" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <header class="site-head glass"><a class="native-trips-back button outline" href="./app.html#home" hidden>← Trip home</a><div class="wrap head-row"><a class="brand" href="./"><img src="./crown.svg" alt="" width="38" height="38">Trip Friend</a><button type="button" class="outline" id="sign-out" hidden>Sign out</button></div></header>
+<header id="real-top" class="native-top glass" hidden><button id="real-back" class="outline" type="button" aria-label="Back">←</button><strong id="real-title">Trip Friend</strong><button id="real-alerts" class="outline" type="button" aria-label="Trip chat"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#bell"></use></svg></button><button id="real-sign-out" type="button" class="outline" hidden>Sign out</button></header>
 <main class="wrap trips-main">
 <div class="workspace-hero glass trips-banner"><p class="kicker">YOUR PRIVATE WORKSPACE</p><h1>Private trips</h1><p>Bring your crew and shared expenses together.</p></div>
 <p id="status" class="trip-status" role="status" aria-live="polite">Connecting to Firebase…</p>
 <section class="glass card" id="account" hidden>
-<h2>Join your crew.</h2><p>Use the email your trip organizer invited.</p>
+<h2>Join your crew.</h2><p><a href="./app.html#home">Try the demo</a></p><p>Use the email your trip organizer invited.</p>
 <form id="auth-form">
 <label>Email <input type="email" name="email" required autocomplete="email"></label>
 <label>Password <input type="password" name="password" required autocomplete="current-password"></label>
@@ -29,20 +30,21 @@
 <form id="set-password" hidden><label>Create password<input name="password" type="password" required minlength="6" autocomplete="new-password"></label><button class="blue">Save password</button></form></section>
 <details class="glass card" id="settings" hidden><summary>Account settings</summary><form id="change-email"><label>New email<input name="email" type="email" required autocomplete="email"></label><label>Current password<input name="password" type="password" required autocomplete="current-password"></label><button class="outline">Send verification to new email</button></form></details>
 <section id="workspace" class="trip-grid" hidden>
-<article class="glass card"><h2>Your trips</h2><p>Create a trip to start planning with friends.</p>
+<article class="glass card" id="real-trip-list"><h2>Your trips</h2><p><a href="./app.html#home">Try the demo</a></p><p>Create a trip to start planning with friends.</p>
 <form id="create-trip"><label>Trip name <input name="name" placeholder="e.g. Manali weekend" required maxlength="80"></label><button class="blue">Create trip</button></form>
 <p id="list-status" class="fine" role="status"></p><ul class="data-list" id="trip-list"></ul>
 </article>
 <article class="glass card trip-empty" id="trip-empty" hidden><img src="./crown.svg" alt="" width="48" height="48"><h2>Open a trip</h2><p>Choose a trip to see your crew, shared expenses, and balances.</p></article>
 <article class="glass card" id="detail" hidden><h2 id="trip-name"></h2>
-<h3>Crew</h3><button id="native-share-trip" class="outline" type="button" hidden>Share trip link</button><ul class="data-list" id="crew"></ul>
+<section data-real-screen="home"><h3>Today</h3><p id="real-next-plan" role="status">No upcoming plan.</p><p><a data-real-go="plans" class="button outline">Plans</a> <a data-real-go="settings" class="button outline">Settings</a></p>
+<h3>Who is where</h3><ul id="real-presence" class="data-list"></ul><h3>Crew</h3><button id="native-share-trip" class="outline" type="button" hidden>Share trip link</button><ul class="data-list" id="crew"></ul>
 <details id="member-panel" hidden><summary>Add member</summary><form id="invite">
 <div class="member-fields"><label>Name<input name="name" required maxlength="80" autocomplete="off"></label>
 <label>Mobile number<input name="mobile" type="tel" required minlength="7" maxlength="22" placeholder="+91 98765 43210"></label></div>
 <label>Email address<input name="email" type="email" required maxlength="254"></label>
 <p class="fine">Trip Friend emails the invitation. Your friend creates a password after opening the link.</p>
 <button class="blue">Send invite</button><p id="invite-status" role="status"></p></form><ul class="data-list" id="invites"></ul></details>
-<details id="trip-map-panel" class="map-panel">
+</section><p id="real-location-banner" role="status"></p><button id="real-stop-location" type="button" class="outline" hidden>Stop sharing</button><section data-real-screen="map"><button id="real-share-location" class="outline" type="button" aria-pressed="false">Share my location with this trip</button><details id="trip-map-panel" class="map-panel">
 <summary>Trip map &amp; meeting point</summary>
 <div id="trip-map" aria-label="OpenStreetMap trip map"></div>
 <p id="saved-pin"></p><p id="map-status" role="status"></p>
@@ -52,7 +54,7 @@
 <div class="member-fields"><label>Latitude<input name="lat" type="number" step="any" min="-90" max="90" required></label>
 <label>Longitude<input name="lng" type="number" step="any" min="-180" max="180" required></label></div>
 <div class="actions"><button class="blue">Save meeting point</button><button type="button" class="outline" id="remove-pin" hidden>Remove meeting point</button></div></form></details>
-<h3>Shared expenses</h3><p class="fine">The trip admin posts confirmed expenses. Each saved bill is split equally across the crew listed at the time.</p>
+</section><section data-real-screen="bills"><h3>Shared expenses</h3><p class="fine">The trip admin posts confirmed expenses. Each saved bill is split equally across the crew listed at the time.</p>
 <form id="record-expense" hidden>
 <label>Expense <input name="label" required maxlength="80"></label>
 <label>Amount (₹) <input name="amount" type="number" min="0.01" max="1000000" step="0.01" required></label>
@@ -61,7 +63,20 @@
 </form>
 <ul class="data-list" id="shared-expenses"></ul><p id="expense-status" class="fine" role="status"></p>
 <h4>Net balances for the latest 100 expenses</h4><ul class="data-list" id="shared-balances"></ul>
-</article>
 </section>
+<section data-real-screen="plans" hidden><h3>Shared plans</h3><ul id="real-plans" class="data-list"></ul>
+<form id="real-plan-form" hidden><label>Plan<input name="title" required maxlength="100"></label><label>Date and time<input name="time" type="datetime-local" required></label><button class="gold">Add plan</button></form></section>
+<section data-real-screen="chat" hidden><h3>Trip chat</h3><ul id="real-messages" class="data-list"></ul><form id="real-chat-form"><label>Message<input name="text" required maxlength="1000"></label><button class="blue">Send message</button></form></section>
+<section data-real-screen="photos" hidden><h3>Trip photos</h3><p>Shared photo uploads are awaiting cloud storage setup.</p></section>
+<section data-real-screen="packing" hidden><h3>Packing</h3><p><a href="./app.html#packing">Open the demo packing checklist</a></p></section>
+<section data-real-screen="wrapup" hidden><h3>Wrap-up</h3><p><a href="./app.html#trip">Open the demo wrap-up</a></p></section>
+<section data-real-screen="settings" hidden><h3>Privacy</h3><p>Location sharing starts only when you turn it on. The crew can see your latest position while you share. Trip Friend hides positions older than 15 minutes and removes your position when you stop, once the device can sync.</p><p>Trips and drafts are cached on this Android device.</p></section>
+</article></section>
 </main>
+<div id="real-splash" hidden class="native-splash"><img src="./crown.svg" width="80" height="80" alt="Trip Friend"></div>
+
+<nav id="real-tabs" class="native-tabs glass" aria-label="Trip tabs" hidden><a data-real-go="home">Home</a><a data-real-go="map">Map</a><a data-real-go="bills">Bills</a><a data-real-go="chat">Chat</a><a data-real-go="photos">Photos</a></nav>
+<button id="real-add" class="native-fab gold" type="button" hidden aria-label="Add to trip">+</button>
+<dialog id="real-sheet" class="modal glass native-sheet"><h2>Add to trip</h2><div class="native-actions"><a class="button gold" data-real-go="bills">Add expense</a><a class="button outline" data-real-go="plans">Add plan</a><a class="button outline" data-real-go="chat">Message crew</a></div><form method="dialog"><button class="outline">Close</button></form></dialog>
+<dialog id="real-exit" class="modal glass"><h2>Exit Trip Friend?</h2><button id="real-exit-confirm" class="outline">Exit</button><form method="dialog"><button class="outline">Stay</button></form></dialog>
 </body></html>

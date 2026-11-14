@@ -1,7 +1,21 @@
 'use strict';
+window.TripShell = {
+  native: Boolean(window.Capacitor?.isNativePlatform?.()),
+  bindBack(handler) {
+    return window.Capacitor?.Plugins?.App?.addListener('backButton', () => {
+      const dialog = [...document.querySelectorAll('dialog[open]')].at(-1);
+      if (dialog) dialog.close();
+      else handler();
+    });
+  },
+  route(hash = location.hash) {
+    const match = /^#trip\/([A-Za-z0-9]{20})\/(home|map|bills|chat|photos|plans|packing|wrapup|settings)$/.exec(hash);
+    return match ? {id:match[1], screen:match[2]} : {id:null, screen:'trips'};
+  }
+};
 (() => {
   const capacitor = window.Capacitor;
-  if (!capacitor?.isNativePlatform?.()) return;
+  if (!capacitor?.isNativePlatform?.() || !document.getElementById('native-title')) return;
   const root = document.documentElement;
   root.classList.add('native-runtime');
   const plugins = capacitor.Plugins;

@@ -51,6 +51,45 @@ service cloud.firestore {
           && request.resource.data.acceptedUid == uid()
           && uid() in getAfter(/databases/$(database)/documents/trips/$(tripId)).data.get('memberUids', []);
       }
+      function parentTrip() { return get(/databases/$(database)/documents/trips/$(tripId)).data; }
+      function crew() { return member(parentTrip()) || admin(parentTrip()); }
+      function activeTrip() {
+        return parentTrip().get('status', '') != 'closed' && parentTrip().get('closed', false) != true;
+      }
+      match /plans/{planId} {
+        allow get: if crew();
+        allow list: if crew() && request.query.limit <= 100;
+        allow create: if admin(parentTrip()) && activeTrip()
+          && request.resource.data.keys().hasOnly(['title','startsAt','createdAt'])
+          && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 100
+          && request.resource.data.startsAt is timestamp && request.resource.data.createdAt == request.time;
+      }
+      match /messages/{messageId} {
+        allow get: if crew();
+        allow list: if crew() && request.query.limit <= 100;
+        allow create: if crew() && activeTrip()
+          && request.resource.data.keys().hasOnly(['text','authorUid','createdAt'])
+          && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1000
+          && request.resource.data.authorUid == uid() && request.resource.data.createdAt == request.time;
+      }
+      match /presence/{userId} {
+        function validPosition(p) {
+          return p.keys().hasOnly(['lat','lng','accuracy','heading','speed','label','active','updatedAt'])
+            && p.lat is number && p.lat >= -90 && p.lat <= 90
+            && p.lng is number && p.lng >= -180 && p.lng <= 180
+            && p.accuracy is number && p.accuracy >= 0 && p.accuracy <= 10000
+            && (p.heading == null || (p.heading is number && p.heading >= 0 && p.heading <= 360))
+            && (p.speed == null || (p.speed is number && p.speed >= 0 && p.speed <= 200))
+            && p.label is string && p.label.size() > 0 && p.label.size() <= 80
+            && p.active == true && p.updatedAt == request.time;
+        }
+        allow get: if crew();
+        allow list: if crew() && request.query.limit <= 100;
+        allow create: if crew() && activeTrip() && userId == uid() && validPosition(request.resource.data);
+        allow update: if crew() && activeTrip() && userId == uid() && validPosition(request.resource.data)
+          && request.time >= resource.data.updatedAt + duration.value(15, 's');
+        allow delete: if verified() && userId == uid();
+      }
       match /map/meeting {
         function trip() { return get(/databases/$(database)/documents/trips/$(tripId)).data; }
         allow get: if member(trip()) || admin(trip());
