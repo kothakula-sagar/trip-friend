@@ -1,11 +1,18 @@
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js';
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,sendEmailVerification,signOut,reload,getIdToken,sendSignInLinkToEmail,isSignInWithEmailLink,signInWithEmailLink,updatePassword,verifyBeforeUpdateEmail,reauthenticateWithCredential,EmailAuthProvider} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
-import {getFirestore,collection,addDoc,doc,query,where,limit,orderBy,onSnapshot,serverTimestamp,updateDoc,arrayUnion,getDocFromServer,getDoc,setDoc,writeBatch,or,getDocs} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js';
+import {getFirestore,collection,addDoc,doc,query,where,limit,orderBy,onSnapshot,serverTimestamp,updateDoc,arrayUnion,getDocFromServer,getDoc,setDoc,writeBatch,or,getDocs,deleteDoc} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js';
+import {createTripMap} from './trip-map.js';
 import {firebaseConfig} from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const meetingPoint = id => doc(db,'trips',id,'map','meeting');
+const showTripMap = createTripMap({
+  listen: (id,change,error) => onSnapshot(meetingPoint(id),snapshot => change(snapshot.data()),error),
+  save: (id,point) => setDoc(meetingPoint(id),{...point,updatedAt:serverTimestamp()}),
+  remove: id => deleteDoc(meetingPoint(id))
+});
 const $ = id => document.getElementById(id);
 function status(message, tone = '') {
   $('status').textContent = message;
@@ -108,6 +115,7 @@ function showSession(user) {
   stopTrips?.();
   stopExpenses?.();
   selected = null;
+  showTripMap(null);
   tripRows = [];
   $('trip-list').replaceChildren();
   $('detail').hidden = true;
@@ -140,6 +148,7 @@ function showSession(user) {
     else if (selected) {
       stopExpenses?.();
       selected = null;
+      showTripMap(null);
       $('detail').hidden = true;
       $('trip-empty').hidden = false;
     }
@@ -168,6 +177,7 @@ function displayTrip(trip) {
   selected = trip.id;
   const data = trip.data();
   const admin = data.ownerUid === auth.currentUser.uid;
+  showTripMap(trip.id,admin);
   $('trip-empty').hidden = true;
   $('detail').hidden = false;
   for (const button of $('trip-list').querySelectorAll('button')) {

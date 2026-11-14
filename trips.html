@@ -42,6 +42,16 @@
 <label>Email address<input name="email" type="email" required maxlength="254"></label>
 <p class="fine">Trip Friend emails the invitation. Your friend creates a password after opening the link.</p>
 <button class="blue">Send invite</button><p id="invite-status" role="status"></p></form><ul class="data-list" id="invites"></ul></details>
+<details id="trip-map-panel" class="map-panel">
+<summary>Trip map &amp; meeting point</summary>
+<div id="trip-map" aria-label="OpenStreetMap trip map"></div>
+<p id="saved-pin"></p><p id="map-status" role="status"></p>
+<div class="actions"><button type="button" class="outline" id="locate-map">Use my location</button><a id="map-directions" hidden target="_blank" rel="noopener">Open pin in OpenStreetMap</a></div>
+<form id="pin-form" hidden><p class="fine">Click the map or enter coordinates to share a meeting point.</p>
+<label>Meeting point name<input name="name" maxlength="80" placeholder="Old Manali bridge" required></label>
+<div class="member-fields"><label>Latitude<input name="lat" type="number" step="any" min="-90" max="90" required></label>
+<label>Longitude<input name="lng" type="number" step="any" min="-180" max="180" required></label></div>
+<div class="actions"><button class="blue">Save meeting point</button><button type="button" class="outline" id="remove-pin" hidden>Remove meeting point</button></div></form></details>
 <h3>Shared expenses</h3><p class="fine">The trip admin posts confirmed expenses. Each saved bill is split equally across the crew listed at the time.</p>
 <form id="record-expense" hidden>
 <label>Expense <input name="label" required maxlength="80"></label>
