@@ -14,7 +14,7 @@ const db = initializeFirestore(app, window.TripShell.native ? {
 const real = createRealTrip({
   subscribe: (id,path,field,direction,update,error) => onSnapshot(
     query(collection(db,'trips',id,path),orderBy(field,direction),limit(100)),
-    snapshot => update(snapshot.docs.map(item => ({...item.data(),id:item.id}))),error),
+    {includeMetadataChanges:true}, snapshot => update(snapshot.docs.map(item => ({...item.data(),id:item.id})),snapshot.metadata),error),
   write: (id,path,data,key) => key
     ? setDoc(doc(db,'trips',id,path,key),{...data,updatedAt:serverTimestamp()})
     : addDoc(collection(db,'trips',id,path),{...data,createdAt:serverTimestamp()}),

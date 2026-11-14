@@ -70,7 +70,13 @@
 <section data-real-screen="photos" hidden><h3>Trip photos</h3><p>Shared photo uploads are awaiting cloud storage setup.</p></section>
 <section data-real-screen="packing" hidden><h3>Packing</h3><p><a href="./app.html#packing">Open the demo packing checklist</a></p></section>
 <section data-real-screen="wrapup" hidden><h3>Wrap-up</h3><p><a href="./app.html#trip">Open the demo wrap-up</a></p></section>
-<section data-real-screen="settings" hidden><h3>Privacy</h3><p>Location sharing starts only when you turn it on. The crew can see your latest position while you share. Trip Friend hides positions older than 15 minutes and removes your position when you stop, once the device can sync.</p><p>Trips and drafts are cached on this Android device.</p></section>
+<section data-real-screen="settings" hidden><h3>Notifications</h3>
+<label><input type="checkbox" id="trip-alert-enable"> Alert me to new messages while this trip is open</label>
+<label>Notification sound <select id="trip-alert-tone"><option value="chime">Aurora chime</option><option value="soft">Soft bell</option><option value="bright">Royal signal</option><option value="silent">Silent</option><option value="custom">My uploaded sound</option></select></label>
+<label>Upload a sound (up to 500 KB)<input type="file" id="trip-alert-file" accept="audio/*"></label>
+<button class="outline" type="button" id="trip-alert-test">Test notification</button>
+<p id="trip-alert-status" role="status"></p><p class="fine">Uploaded sounds play inside the open app. Android sound and Do Not Disturb settings apply to system alerts.</p>
+<h3>Privacy</h3><p>Location sharing starts only when you turn it on. The crew can see your latest position while you share. Trip Friend hides positions older than 15 minutes and removes your position when you stop, once the device can sync.</p><p>Trips and drafts are cached on this Android device.</p></section>
 </article></section>
 </main>
 <div id="real-splash" hidden class="native-splash"><img src="./crown.svg" width="80" height="80" alt="Trip Friend"></div>

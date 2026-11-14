@@ -1,10 +1,11 @@
 import {cp,copyFile,mkdir,readFile,rm,writeFile} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
 import {existsSync} from 'node:fs';
 
 await rm('www',{recursive:true,force:true});
 await mkdir('www');
 const files = ['app.html','app.js','aurora.css','icons.svg','crown.svg','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest','release.js',
-  'trips.html','trips.js','trip-map.js','firebase-config.js','help.html','help.js','android-shell.css','android-shell.js','real-trip.js'];
+  'trips.html','trips.js','trip-map.js','firebase-config.js','help.html','help.js','android-shell.css','android-shell.js','real-trip.js','trip-notifications.js'];
 for (const file of files) await copyFile(file,'www/'+file);
 await cp('photos','www/photos',{recursive:true});
 await writeFile('www/android-config.json',JSON.stringify({push:existsSync('google-services.json')}));
@@ -45,6 +46,7 @@ const icon = `<vector xmlns:android="http://schemas.android.com/apk/res/android"
   <path android:fillColor="#00000000" android:strokeColor="#9B7416" android:strokeWidth="2" android:strokeLineJoin="round" android:pathData="M38,47 L46,52 L54,40 L62,52 L70,47 L66,65 L42,65 Z"/>
 </vector>`;
 await mkdir(res+'/raw',{recursive:true});
+execFileSync(process.execPath,['scripts/notification-audio.mjs',res+'/raw']);
 const rate = 16000;
 const samples = rate * 2;
 const wave = Buffer.alloc(44+samples*2);
@@ -60,6 +62,7 @@ for (let i=0;i<samples;i++) {
 await writeFile(res+'/raw/ringtone.wav',wave);
 await mkdir(res+'/drawable',{recursive:true});
 await writeFile(res+'/drawable/trip_crown.xml',icon);
+await writeFile(res+'/drawable/ic_trip_notification.xml',`<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFF" android:pathData="M3,6L8,9L12,4L16,9L21,6L18,18L6,18ZM6,20L18,20L18,22L6,22Z"/></vector>`);
 await mkdir(res+'/mipmap-anydpi-v26',{recursive:true});
 const adaptive = '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"><background android:drawable="@color/trip_ivory"/><foreground android:drawable="@drawable/trip_crown"/></adaptive-icon>';
 for (const name of ['ic_launcher','ic_launcher_round']) {

@@ -2,9 +2,12 @@ const $ = id => document.getElementById(id);
 const shell = window.TripShell;
 const native = shell.native;
 
+import {setupTripNotifications} from "./trip-notifications.js";
+
 export function createRealTrip({subscribe,write,erase,identity,openTrip,showList}) {
   let trip, generation = 0, watch, watching = false, plans = [], subscriptions = [], lastWrite, positionBusy = false, queuedPosition;
   let routeDepth = 0;
+  const notifications = setupTripNotifications({uid:() => identity()?.uid,openTrip:id => go(id,'chat')});
   const notice = message => { $('real-location-banner').textContent = message; };
   function row(text) {
     const node = document.createElement('li');
@@ -187,6 +190,7 @@ export function createRealTrip({subscribe,write,erase,identity,openTrip,showList
       subscriptions.forEach(stop => stop());
       subscriptions = [];
       trip = value;
+      if (trip) notifications.refresh();
       plans = []; positions = []; updateCountdown(); renderPresence();
       $('real-plans').replaceChildren();
       $('real-messages').replaceChildren();
@@ -195,13 +199,23 @@ export function createRealTrip({subscribe,write,erase,identity,openTrip,showList
         $('real-chat-form').hidden = trip.closed;
         $('real-share-location').hidden = trip.closed;
         const problem = id => () => { $(id).replaceChildren(row('Could not load this section. Check your connection and Firestore rules.')); };
+        let seenMessages;
+        let baseline;
         subscriptions = [
           subscribe(trip.id,'plans','startsAt','asc',items => {
             plans = items;
             $('real-plans').replaceChildren(...items.map(plan => row(plan.title+' · '+new Date(plan.startsAt.toMillis()).toLocaleString())));
             updateCountdown();
           },problem('real-plans')),
-          subscribe(trip.id,'messages','createdAt','desc',items => {
+          subscribe(trip.id,'messages','createdAt','desc',(items, metadata) => {
+            const latest = new Set(items.map(item => item.id));
+            if (!metadata.fromCache) {
+              if (seenMessages && items.some(item => !seenMessages.has(item.id) && item.authorUid !== identity()?.uid && item.createdAt?.toMillis() > baseline)) {
+                notifications.alert(trip.id);
+              }
+              seenMessages = latest;
+              baseline = Math.max(baseline ?? 0,...items.map(item => item.createdAt?.toMillis() || 0));
+            }
             $('real-messages').replaceChildren(...items.reverse().map(message => row((message.authorUid === identity()?.uid ? 'You' : 'Crew')+' · '+message.text)));
           },problem('real-messages')),
           subscribe(trip.id,'presence','updatedAt','desc',items => { positions = items; renderPresence(); },problem('real-presence'))
