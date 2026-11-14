@@ -135,26 +135,7 @@ window.TripShell = {
   };
   plugins.App?.addListener('appUrlOpen',event => openDeepLink(event.url));
   plugins.App?.getLaunchUrl().then(event => { if (event?.url) openDeepLink(event.url); }).catch(() => {});
-  async function checkUpdate() {
-    try {
-      const info = await plugins.App.getInfo();
-      $('native-version').textContent = 'Android version '+info.version;
-      const request = await fetch('https://api.github.com/repos/kothakula-sagar/trip-friend/releases/latest');
-      if (!request.ok) return;
-      const release = await request.json();
-      const next = release.tag_name.replace(/^v/,'').split('.').map(Number);
-      const installed = info.version.split('.').map(Number);
-      if (next.length !== 3 || next.some(value => !Number.isSafeInteger(value))) return;
-      const first = next.findIndex((value,index) => value !== installed[index]);
-      const apk = release.assets.find(asset => asset.name === 'TripFriend.apk');
-      if (first < 0 || next[first] <= installed[first] || !apk) return;
-      const button = $('native-update');
-      button.hidden = false;
-      button.onclick = () => window.open(apk.browser_download_url,'_system');
-    } catch {}
-  }
-  checkUpdate();
-  addEventListener('online',checkUpdate);
+  plugins.App?.getInfo().then(info => { $('native-version').textContent = 'Android version '+info.version; }).catch(() => {});
   setTimeout(() => { $('native-splash').hidden = true; },matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 390);
   render();
 })();

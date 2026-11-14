@@ -5,7 +5,7 @@ import {existsSync} from 'node:fs';
 await rm('www',{recursive:true,force:true});
 await mkdir('www');
 const files = ['app.html','app.js','aurora.css','icons.svg','crown.svg','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest','release.js',
-  'trips.html','trips.js','trip-map.js','firebase-config.js','help.html','help.js','android-shell.css','android-shell.js','real-trip.js','trip-notifications.js'];
+  'trips.html','trips.js','trip-map.js','firebase-config.js','help.html','help.js','android-shell.css','android-shell.js','real-trip.js','trip-notifications.js','native-update.js'];
 for (const file of files) await copyFile(file,'www/'+file);
 await cp('photos','www/photos',{recursive:true});
 await writeFile('www/android-config.json',JSON.stringify({push:existsSync('google-services.json')}));
@@ -24,6 +24,7 @@ const main = 'android/app/src/main';
 const manifestPath = main+'/AndroidManifest.xml';
 let manifest = await readFile(manifestPath,'utf8');
 const additions = [
+  '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />',
   '<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />',
   '<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />',
   '<uses-feature android:name="android.hardware.location.gps" android:required="false" />'
@@ -40,6 +41,18 @@ if (!manifest.includes('android:scheme="tripfriend"')) {
 }
 await writeFile(manifestPath,manifest);
 
+const java = main+'/java/com/tripfriend/app';
+await copyFile('native-android/TripUpdaterPlugin.java',java+'/TripUpdaterPlugin.java');
+await writeFile(java+'/MainActivity.java',`package com.tripfriend.app;
+import android.os.Bundle;
+import com.getcapacitor.BridgeActivity;
+public class MainActivity extends BridgeActivity {
+  @Override public void onCreate(Bundle state) {
+    registerPlugin(TripUpdaterPlugin.class);
+    super.onCreate(state);
+  }
+}
+`);
 const res = main+'/res';
 const icon = `<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
   <path android:fillColor="#FBF7EE" android:strokeColor="#AF8521" android:strokeWidth="2" android:pathData="M54,26a28,28 0,1 0,0 56a28,28 0,1 0,0 -56"/>

@@ -84,3 +84,9 @@ Publish the updated Firestore rules before testing. The additions are `trips/{tr
 ### Notification sounds (1.4.1)
 
 Open a real trip → Settings → Notifications. Enable alerts, choose Aurora chime, Soft bell, Royal signal, Silent, or upload an audio file up to 500 KB. Tap Test notification. Android bundled tones use dedicated system channels. Android system channel settings and Do Not Disturb apply. Uploaded audio stays on the device and plays inside the open app. Incoming chat alerts are limited to new messages from other members in the currently open trip. Firebase Cloud Messaging delivery while the app is closed requires a trusted sender and device registration integration.
+
+### Android updates from inside Trip Friend
+
+Version 1.5.0 checks for the latest signed GitHub release at startup, on return to the app, and periodically while open. Publish future releases as `vX.Y.Z` with asset `TripFriend.apk`, the same package ID and signing key, and a higher Android version code. The app downloads the APK and opens Android’s package installer. The user confirms installation. On some phones Android first asks the user to allow installs from Trip Friend. Return and tap Update again after granting it.
+
+Install the first signed build manually to bootstrap the updater. Debug APKs use a different signing key and cannot update to a release-signed APK in place. On devices that allow notifications, the app posts one local alert per discovered version. Closed-app discovery requires a separate push sender.
