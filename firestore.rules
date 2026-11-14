@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function verified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function email() { return request.auth.token.email.lower(); }
+    function member(trip) { return verified() && email() in trip.memberEmails; }
+    function admin(trip) {
+      return verified() && request.auth.uid == trip.ownerUid && email() in trip.memberEmails;
+    }
+    function validTrip(trip) {
+      return trip.keys().hasAll(['name','ownerUid','memberEmails','createdAt'])
+        && trip.keys().hasOnly(['name','ownerUid','memberEmails','createdAt'])
+        && trip.name is string && trip.name.size() > 0 && trip.name.size() <= 80
+        && trip.memberEmails is list && trip.memberEmails.size() <= 20
+        && trip.memberEmails.toSet().size() == trip.memberEmails.size()
+        && email() in trip.memberEmails;
+    }
+    match /trips/{tripId} {
+      allow get: if member(resource.data);
+      allow list: if request.query.limit <= 50 && member(resource.data);
+      allow create: if verified() && validTrip(request.resource.data)
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.memberEmails == [email()]
+        && request.resource.data.createdAt == request.time;
+      allow update: if admin(resource.data) && validTrip(request.resource.data)
+        && request.resource.data.memberEmails.hasAll(resource.data.memberEmails)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberEmails']);
+      match /expenses/{expenseId} {
+        function trip() { return get(/databases/$(database)/documents/trips/$(tripId)).data; }
+        allow get: if member(trip());
+        allow list: if request.query.limit <= 100 && member(trip());
+        allow create: if admin(trip())
+          && request.resource.data.keys().hasAll(['label','paise','payer','participants','createdAt'])
+          && request.resource.data.keys().hasOnly(['label','paise','payer','participants','createdAt'])
+          && request.resource.data.label is string
+          && request.resource.data.label.size() > 0 && request.resource.data.label.size() <= 80
+          && request.resource.data.paise is int
+          && request.resource.data.paise > 0 && request.resource.data.paise <= 100000000
+          && request.resource.data.participants == trip().memberEmails
+          && request.resource.data.payer in request.resource.data.participants
+          && request.resource.data.createdAt == request.time;
+      }
+    }
+  }
+}

@@ -38,3 +38,9 @@ The first public version is `1.0.0`. Visitors install the current PWA from the w
 - **Nearby places, weather, and packing.** Use a places provider for actual places and a weather provider for forecast data. Ask permission before using location and show data source and update time. An optional Grok integration can summarize the results and tailor a packing list. Keep its key server-side and apply quotas. The demo checklist works without an API.
 
 The current no-login demo includes installation, an in-app update prompt, a packing checklist, and simulated trip closure. Authentication, backend-enforced roles and proofs, background push, weather, nearby places and private live calls require the connected backend.
+
+## Connect the private trip workspace
+
+The private workspace uses Firebase project `trip-friend-bd675`. Enable Email/Password in Firebase Authentication and add `kothakula-sagar.github.io` to Authorized domains. Create the default Firestore database in production mode. Publish the checked-in `firestore.rules` in the Firestore Rules tab, or deploy only those rules with `firebase deploy --only firestore:rules --project trip-friend-bd675` when authenticated as a project owner.
+
+Test with two verified email accounts. The first account creates a trip and grants access to the second account by email. The second account should only see trips that include its verified address. Post an expense as the trip owner and check that both accounts see it. Each expense preserves the crew list that applied when it was posted. The workspace displays the latest 100 expenses and their balances.
