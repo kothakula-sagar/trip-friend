@@ -1,5 +1,5 @@
 'use strict';
-const currentVersion = '1.1.0';
+const currentVersion = '1.1.1';
 document.querySelectorAll('[data-version]').forEach(node => { node.textContent = currentVersion; });
 const installButton = document.getElementById('install-app');
 let installPrompt;

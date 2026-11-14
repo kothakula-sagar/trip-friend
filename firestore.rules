@@ -4,7 +4,7 @@ service cloud.firestore {
     function verified() {
       return request.auth != null && request.auth.token.email_verified == true;
     }
-    function email() { return request.auth.token.email.lower(); }
+    function email() { return request.auth.token.email; }
     function member(trip) { return verified() && email() in trip.memberEmails; }
     function admin(trip) {
       return verified() && request.auth.uid == trip.ownerUid && email() in trip.memberEmails;

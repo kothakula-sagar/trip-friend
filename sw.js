@@ -1,4 +1,4 @@
-const cacheName = 'trip-friend-1.1.0';
+const cacheName = 'trip-friend-1.1.1';
 const assets = ['./','./index.html','./crown.svg','./aurora.css','./aurora.js','./photos/beas.webp','./photos/solang.webp','./app.html','./help.html','./help.js','./app.js','./release.js','./style.css','./icon.svg','./icon-192.png','./icon-512.png','./manifest.webmanifest'];
 self.addEventListener('install', event => event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(assets.map(url => new Request(url, {cache:'reload'}))))));
 self.addEventListener('activate', event => event.waitUntil((async () => {
@@ -12,5 +12,6 @@ self.addEventListener('message', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;
   if (event.request.cache === 'no-store') return;
+  if (new URL(event.request.url).pathname.endsWith('/trips.html')) return;
   event.respondWith(fetch(event.request).catch(async () => (await caches.match(event.request)) || Response.error()));
 });
