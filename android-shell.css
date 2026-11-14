@@ -1,0 +1,21 @@
+.native-only{display:none!important}
+.native-runtime .native-only:not([hidden]){display:revert!important}
+.native-runtime .site-head,.native-runtime .workspace-hero,.native-runtime .today,.native-runtime .tabs,.native-runtime .release-banner{display:none!important}
+.native-runtime{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);overflow-wrap:anywhere}
+.native-runtime .native-top:not([hidden]){position:sticky;top:0;z-index:20;display:flex!important;align-items:center;gap:8px;min-height:64px;padding:calc(6px + var(--safe-top)) 16px 6px;background:color-mix(in srgb,var(--base) 84%,transparent);border-radius:0 0 24px 24px}
+.native-top strong{flex:1;font-size:1.15rem}
+.native-runtime .native-tabs:not([hidden]){position:fixed;z-index:20;bottom:0;left:0;right:0;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));padding:5px 8px calc(5px + var(--safe-bottom));background:color-mix(in srgb,var(--base) 84%,transparent);border-radius:24px 24px 0 0}
+.native-tabs a{display:grid;justify-items:center;place-content:center;gap:3px;min-height:54px;text-decoration:none;font-size:.74rem;font-weight:700}
+.native-tabs [aria-current]{background:color-mix(in srgb,var(--gold) 17%,transparent);border-bottom:3px solid var(--gold);border-radius:15px}
+.native-runtime .app{padding-top:16px;padding-bottom:calc(120px + var(--safe-bottom))}
+.native-runtime button,.native-runtime .button{min-height:48px}
+.native-runtime .native-fab:not([hidden]){position:fixed;bottom:calc(74px + var(--safe-bottom));right:16px;z-index:19;width:56px;height:56px;font-size:1.6rem;box-shadow:var(--shadow)}
+.native-runtime .native-sheet[open]{position:fixed;inset:auto 0 0;margin:0;width:100%;max-width:none;border-radius:24px 24px 0 0;padding-bottom:calc(16px + var(--safe-bottom))}
+.native-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.native-crew{display:grid;gap:6px}.native-crew span{display:flex;align-items:center;gap:8px}.native-crew b{display:grid;place-items:center;width:32px;height:32px;background:#e0e7fa;color:#1f3a93;border-radius:50%}
+.native-runtime .native-splash:not([hidden]){position:fixed;inset:0;display:grid!important;place-items:center;z-index:40;background:radial-gradient(ellipse at 25% 25%,#d9e0ff,transparent 55%),var(--base);animation:appear 280ms ease-out}
+.native-offline{margin:0 0 10px;padding:8px;border-radius:12px;background:var(--fill)}
+.native-runtime[data-native-theme=midnight]{--base:#171b30;--ink:#fffaf2;--muted:#d5d9ed;--blue:#9ebcff;--fill:#26304cdd;--edge:#a3b4d568;--blob1:#263e9d;--blob2:#796322;color-scheme:dark}
+.native-runtime[data-native-theme=midnight] input:not([type=checkbox]),.native-runtime[data-native-theme=midnight] select{background:#222941;color:#fffaf2}
+.native-runtime[data-native-theme=midnight] button:not(.gold),.native-runtime[data-native-theme=midnight] .outline{background:#344262;color:#fffaf2}
+.native-runtime[data-native-theme=midnight] #payments .line,.native-runtime[data-native-theme=midnight] #packing-list label,.native-runtime[data-native-theme=midnight] .notice{background:#242d48;color:#fffaf2}
+.native-runtime.native-economy .mesh i{animation:none}.native-runtime.native-economy .glass{--blur:blur(10px) saturate(125%)}

@@ -299,12 +299,26 @@ if (window.IntersectionObserver && !reduced.matches) {
 let installPrompt;
 window.addEventListener('beforeinstallprompt',event => { event.preventDefault(); installPrompt = event; });
 $('get-app').onclick = async () => {
-  if (installPrompt) {
-    const prompt = installPrompt;
-    installPrompt = undefined;
-    await prompt.prompt();
-    return;
-  }
+  $('install-pwa').hidden = !installPrompt;
   $('install').showModal();
+  try {
+    const response = await fetch('https://api.github.com/repos/kothakula-sagar/trip-friend/releases/latest');
+    if (!response.ok) throw new Error();
+    const release = await response.json();
+    const apk = release.assets.find(asset => asset.name === 'TripFriend.apk');
+    if (!apk) throw new Error();
+    $('apk-download').href = apk.browser_download_url;
+    $('apk-download').hidden = false;
+    $('apk-status').textContent = 'Android · '+release.tag_name;
+  } catch {
+    $('apk-status').textContent = 'A signed Android APK is not available yet.';
+  }
+};
+$('install-pwa').onclick = async () => {
+  if (!installPrompt) return;
+  const prompt = installPrompt;
+  installPrompt = undefined;
+  $('install-pwa').hidden = true;
+  await prompt.prompt();
 };
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});

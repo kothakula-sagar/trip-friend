@@ -53,7 +53,7 @@ function paise(value) {
 }
 function navigate() {
   const wanted = location.hash.slice(1);
-  const id = ['expenses','map','chat','album','packing','trip'].includes(wanted) ? wanted : 'expenses';
+  const id = [...['expenses','map','chat','album','packing','trip'],...(window.Capacitor?.isNativePlatform?.() ? ['home','plans','settings'] : [])].includes(wanted) ? wanted : (window.Capacitor?.isNativePlatform?.() ? 'home' : 'expenses');
   document.querySelectorAll('.panel').forEach(panel => { panel.hidden = panel.id !== id; });
   document.querySelectorAll('.tabs a').forEach(link => {
     if (link.hash === '#' + id) link.setAttribute('aria-current', 'page');

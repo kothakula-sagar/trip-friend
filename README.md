@@ -56,3 +56,17 @@ Enable **Email link (passwordless sign-in)** under Firebase Authentication → S
 - `index.html` and `help.html`: shared icon and demo styling.
 - `aurora.css` and `icons.svg`: shared styles and line icons. The old `style.css` and `trips.css` were removed.
 - `sw.js`, `release.js`, and `release.json`: bumped to 1.2.0 together. The service worker precaches the shared icon sprite and removes the old stylesheet from the precache. Private trip data continues to load through Firebase.
+
+## Android package
+
+The browser build stays static and the Android package opens the Manali demo on Home. Private trips remain accessible from Home. The Android shell is shared with `app.html` and only activates in Capacitor.
+
+**Prepare a local build:** install Node 22+, Java 21, Android Studio and Android SDK Platform 36. Run `npm ci`, `npm run android:prepare`, `npx cap add android`, `npm run android:prepare`, then `npx cap sync android`. Only run `cap add` when the Android directory does not exist. Run `cd android && ./gradlew assembleDebug` for a test APK. Install `app/build/outputs/apk/debug/app-debug.apk` using Android Studio or `adb install`.
+
+**Firebase Android registration:** add package `com.tripfriend.app` to existing Firebase project `trip-friend-bd675`, download `google-services.json` to the repository root locally, and rerun prepare/sync. On GitHub Actions store the file contents in `TRIP_FRIEND_GOOGLE_SERVICES_JSON`. Never put a Firebase service account key in the APK. Firestore rules and current roles are shared with the web app.
+
+**Signed Android releases:** use GitHub Actions → Build Trip Friend Android → Run workflow → publish. Configure `TRIP_FRIEND_KEYSTORE_BASE64`, `TRIP_FRIEND_STORE_PASSWORD`, `TRIP_FRIEND_KEY_PASSWORD`, and `TRIP_FRIEND_KEY_ALIAS` as repository Actions secrets. Use the same signing key for every update and increment both the Android version code and version in release.json. Bump release.js and the cache name in sw.js when updating the web version. The workflow publishes TripFriend.apk and TripFriend.aab. Download the APK from the landing page and allow Android to install it from the source used for that download. Leave the signing key outside the repository.
+
+**Plugins and permissions:** Capacitor App (back button and custom trip links), Haptics (taps), Share (trip link for existing members), Geolocation (foreground, approximate or precise location), and Push Notifications (Android 13+ notification permission, Firebase registration, channel setup and route on notification tap). Bundled WebView access and Firebase use Internet permission. Location is displayed locally. FCM event delivery needs a trusted notification sender and storage of device tokens. Camera/gallery currently use the existing file chooser. The app does not request background location, microphone, biometric or full-screen intent permissions in this build.
+
+**Current scope:** demo plans, expenses, chat and photo drafts use browser/WebView local storage. Cross-device sync currently applies to existing Firebase trips, member invites, confirmed expenses and meeting points when connected. Android App Links for HTTPS invitation links, live location sharing, real encrypted calls, recording voice notes, biometric unlock and cloud upload queues are separate integrations.

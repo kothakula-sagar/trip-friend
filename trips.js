@@ -6,6 +6,11 @@ import {firebaseConfig} from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+if (window.Capacitor?.isNativePlatform?.()) {
+  document.querySelector('.native-trips-back').hidden = false;
+  window.Capacitor.Plugins.App.addListener('backButton',() => { location.href = './app.html#home'; });
+}
+const requestedTrip = new URL(location.href).searchParams.get('open');
 const db = getFirestore(app);
 const meetingPoint = id => doc(db,'trips',id,'map','meeting');
 const showTripMap = createTripMap({
@@ -169,7 +174,7 @@ function showSession(user) {
       return li;
     }));
     if (!tripRows.length) $('trip-list').append(row('No private trips yet.'));
-    const current = tripRows.find(trip => trip.id === selected);
+    const current = tripRows.find(trip => trip.id === (selected || requestedTrip));
     if (current) displayTrip(current);
     else if (selected) {
       stopExpenses?.();
@@ -204,6 +209,14 @@ function displayTrip(trip) {
   const data = trip.data();
   const admin = data.ownerUid === auth.currentUser.uid;
   showTripMap(trip.id,admin);
+  const share = $('native-share-trip');
+  const nativeShare = window.Capacitor?.Plugins?.Share;
+  share.hidden = !window.Capacitor?.isNativePlatform?.() || !nativeShare;
+  share.onclick = () => {
+    const url = new URL('https://kothakula-sagar.github.io/trip-friend/trips.html');
+    url.searchParams.set('open',trip.id);
+    nativeShare.share({title:data.name,text:'Open this trip with your invited account.',url:url.href}).catch(showError);
+  };
   $('trip-empty').hidden = true;
   $('detail').hidden = false;
   for (const button of $('trip-list').querySelectorAll('button')) {
@@ -277,7 +290,7 @@ submit('invite',async fields => {
   const existing = await getDoc(ref);
   if (existing.exists() && existing.data().acceptedUid) return status('This invitation has already been accepted.');
   if (!existing.exists()) await setDoc(ref,{name,mobile,acceptedUid:''});
-  const url = new URL('./trips.html',location.href);
+  const url = new URL('https://kothakula-sagar.github.io/trip-friend/trips.html');
   url.searchParams.set('trip',tripId);
   try {
     await sendSignInLinkToEmail(auth,address,{url:url.href,handleCodeInApp:true});

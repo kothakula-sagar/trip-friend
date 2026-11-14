@@ -1,5 +1,5 @@
 'use strict';
-const currentVersion = '1.2.0';
+const currentVersion = '1.3.0';
 document.querySelectorAll('[data-version]').forEach(node => { node.textContent = currentVersion; });
 const installButton = document.getElementById('install-app');
 let installPrompt;
@@ -24,7 +24,7 @@ if (installButton) {
     status.textContent = result.outcome === 'accepted' ? 'Trip Friend was added to your device.' : 'You can install Trip Friend anytime from this page.';
   });
 }
-if ('serviceWorker' in navigator) {
+if (!window.Capacitor?.isNativePlatform?.() && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(registration => {
     const banner = document.createElement('aside');
     banner.className = 'release-banner wrap';

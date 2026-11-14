@@ -8,7 +8,7 @@
 <script type="module" src="./trips.js"></script>
 </head>
 <body class="trips-page"><div class="mesh" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-<header class="site-head glass"><div class="wrap head-row"><a class="brand" href="./"><img src="./crown.svg" alt="" width="38" height="38">Trip Friend</a><button type="button" class="outline" id="sign-out" hidden>Sign out</button></div></header>
+<header class="site-head glass"><a class="native-trips-back button outline" href="./app.html#home" hidden>← Trip home</a><div class="wrap head-row"><a class="brand" href="./"><img src="./crown.svg" alt="" width="38" height="38">Trip Friend</a><button type="button" class="outline" id="sign-out" hidden>Sign out</button></div></header>
 <main class="wrap trips-main">
 <div class="workspace-hero glass trips-banner"><p class="kicker">YOUR PRIVATE WORKSPACE</p><h1>Private trips</h1><p>Bring your crew and shared expenses together.</p></div>
 <p id="status" class="trip-status" role="status" aria-live="polite">Connecting to Firebase…</p>
@@ -35,7 +35,7 @@
 </article>
 <article class="glass card trip-empty" id="trip-empty" hidden><img src="./crown.svg" alt="" width="48" height="48"><h2>Open a trip</h2><p>Choose a trip to see your crew, shared expenses, and balances.</p></article>
 <article class="glass card" id="detail" hidden><h2 id="trip-name"></h2>
-<h3>Crew</h3><ul class="data-list" id="crew"></ul>
+<h3>Crew</h3><button id="native-share-trip" class="outline" type="button" hidden>Share trip link</button><ul class="data-list" id="crew"></ul>
 <details id="member-panel" hidden><summary>Add member</summary><form id="invite">
 <div class="member-fields"><label>Name<input name="name" required maxlength="80" autocomplete="off"></label>
 <label>Mobile number<input name="mobile" type="tel" required minlength="7" maxlength="22" placeholder="+91 98765 43210"></label></div>
