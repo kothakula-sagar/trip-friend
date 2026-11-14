@@ -1,5 +1,5 @@
-const cacheName = 'trip-friend-1.0.2';
-const assets = ['./','./index.html','./app.html','./help.html','./help.js','./app.js','./release.js','./style.css','./icon.svg','./icon-192.png','./icon-512.png','./manifest.webmanifest'];
+const cacheName = 'trip-friend-1.1.0';
+const assets = ['./','./index.html','./crown.svg','./aurora.css','./aurora.js','./photos/beas.webp','./photos/solang.webp','./app.html','./help.html','./help.js','./app.js','./release.js','./style.css','./icon.svg','./icon-192.png','./icon-512.png','./manifest.webmanifest'];
 self.addEventListener('install', event => event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(assets.map(url => new Request(url, {cache:'reload'}))))));
 self.addEventListener('activate', event => event.waitUntil((async () => {
   const keys = await caches.keys();

@@ -3,48 +3,85 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Trip Friend | Group Trip Bill Splitter, Location &amp; Chat</title>
-<meta name="description" content="Try Trip Friend’s free, no-login demo. Split group trip bills in rupees, confirm repayments, explore a sample friend map, and try chat and a shared photo album.">
+<title>Trip Friend — Travel together like royalty</title>
+<meta name="description" content="A warmer way to travel with friends. Try group bill splitting, dinner polls, shared photos and a simulated call and route in Manali.">
+<meta name="theme-color" content="#FBF7EE">
 <link rel="canonical" href="https://kothakula-sagar.github.io/trip-friend/">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Trip Friend | Group Trip Bill Splitter, Location &amp; Chat">
-<meta property="og:description" content="See how friends can split bills, find the group and share trip moments. Try the interactive demo without an account.">
-<meta property="og:url" content="https://kothakula-sagar.github.io/trip-friend/">
-<meta name="theme-color" content="#19152d">
-<link rel="stylesheet" href="./style.css">
-<link rel="icon" href="./icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="manifest" href="./manifest.webmanifest">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Trip Friend","url":"https://kothakula-sagar.github.io/trip-friend/","description":"Interactive no-login group trip app demo with a bill splitter, sample friend locations, chat and photo album."}</script>
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./aurora.css">
+<script type="module" src="./aurora.js"></script>
 </head>
 <body>
-<header class="header wrap"><a class="brand" href="./"><img src="./icon.svg" width="37" height="37" alt=""> Trip Friend</a><nav aria-label="Main navigation"><a href="#features">Features</a><a href="#install">Install</a><a href="#faq">FAQ</a><a class="button small" href="./app.html">Open demo ↗</a></nav></header>
-<main>
-<section class="hero wrap">
-<div><p class="eyebrow">THE GROUP TRIP COMPANION</p><h1>Good trips.<br><em>Better together.</em></h1><p class="intro">Split the hotel bill, find the friend who took the scenic route, and keep the trip’s photos in one place.</p><div class="actions"><a class="button" href="./app.html">Try the free demo ↗</a><a class="plain" href="#features">Explore features ↓</a></div><p class="subtle">No sign-up. Try it with a sample trip.</p></div>
-<div class="preview" aria-label="Sample Coorg weekend expense summary"><p class="eyebrow">YOUR TRIP WORKSPACE</p><div class="ticket"><div class="ticket-head"><div><small>KARNATAKA · SAMPLE TRIP</small><h2>Coorg weekend</h2></div><div class="avatar">C</div></div><div class="people" aria-label="Five friends"><span>S</span><span>T</span><span>M</span><span>A</span><span>N</span><small>5 friends</small></div><div class="ticket-row"><div><small>HOTEL BILL</small><strong>₹2,500</strong></div><div><small>EACH FRIEND’S SHARE</small><strong>₹500</strong></div></div><div class="ticket-foot"><span>◷</span><div><strong>Payment awaiting confirmation</strong><small>Satvik can confirm when the money arrives.</small></div></div></div><span class="trip-caption">01 / COORG WEEKEND</span></div>
-</section>
-<section class="section wrap" id="features"><p class="eyebrow">WHAT YOU CAN TRY</p><h2>From the first stop to the final split.</h2><div class="features">
-<article><span class="symbol">₹</span><h3>Split bills fairly</h3><p>Pick who paid and who took part. Divide a bill equally, assign individual items, or enter custom amounts. See every share before saving, including ₹0 for anyone excluded.</p><p>Try both sides of a repayment. Mark it paid as Sagar, then confirm or reject it as Satvik. The balance changes only after confirmation.</p><a href="./app.html#expenses">Try the bill splitter →</a></article>
-<article><span class="symbol">⌖</span><h3>Find your friends</h3><p>Tap a sample pin to see the friend’s location, accuracy and last update. Try pausing location sharing and see how an old update appears.</p><a href="./app.html#map">Explore the sample map →</a></article>
-<article><span class="symbol">≋</span><h3>Keep the group in the loop</h3><p>Try group messages, vote in a breakfast poll, and preview voice and call alerts. The live product is designed around tap-to-join calls and push alerts on supported devices.</p><a href="./app.html#chat">Open the group chat →</a></article>
-<article><span class="symbol">▧</span><h3>Collect trip photos</h3><p>Add a photo with a caption and view it in the album. Demo photos stay on this device. Shared cloud albums are planned for the connected version.</p><a href="./app.html#album">Open the photo album →</a></article>
+<div class="mesh" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head glass"><div class="wrap head-row">
+<a class="brand" href="./" aria-label="Trip Friend home"><img src="./crown.svg" alt="" width="38" height="38">Trip Friend</a>
+<nav aria-label="Main navigation"><a href="#features">Features</a><a href="#try">Try it</a><a href="#themes">Themes</a></nav>
+<button class="outline" id="get-app" type="button">Get the app</button>
+</div></header>
+<main id="main" class="wrap">
+<section class="hero" aria-labelledby="hero-title">
+<div class="hero-copy">
+<p class="kicker"><span></span> MADE FOR THE WHOLE CREW</p>
+<h1 id="hero-title"><span>Travel together</span> <span>like royalty</span></h1>
+<p class="lede">See where everyone is, split the bills, make a plan, and call a friend right from the trip.</p>
+<div class="actions"><a class="button blue" href="#try">Try the demo <span aria-hidden="true">↗</span></a><a class="button outline" href="#features">Explore features</a></div>
+</div>
+<div class="phone-stage">
+<div class="phone glass" id="phone">
+<div class="phone-top"><span>9:41</span><span class="island"></span><span aria-hidden="true">▮▮▮ ▰</span></div>
+<div class="phone-title"><div><p class="kicker">THE WEEKEND CREW</p><h2>Manali getaway</h2></div><span class="avatar small-avatar">S</span></div>
+<div class="map" id="route-map">
+<svg viewBox="0 0 320 235" preserveAspectRatio="none" aria-hidden="true">
+<defs><pattern id="grid" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M18 0H0V18" fill="none" stroke="#c0cbd7" stroke-opacity=".48"/></pattern></defs>
+<rect width="320" height="235" fill="#e9efed"/><rect width="320" height="235" fill="url(#grid)"/>
+<path d="M-20 30Q65 4 114 40T215 22T345 16M-20 55Q65 29 114 65T215 47T345 41M-20 81Q65 55 114 91T215 73T345 67M-20 181Q65 155 114 191T215 173T345 167M-20 209Q65 183 114 219T215 201T345 195" fill="none" stroke="#b3c8bc" stroke-width="2"/>
+<path d="M145 -8C134 42 171 44 169 74S130 117 155 147 189 181 170 245" fill="none" stroke="#9ac9df" stroke-width="17" opacity=".8"/>
+<path d="M0 155L53 132 82 145 128 120 170 129 198 109 251 114 320 83M38 235L70 180 77 141 22 83M242 235L228 161 251 114 245 57 292 0" fill="none" stroke="#fff" stroke-width="6"/>
+<path class="route-base" d="M68 172L77 141 128 120 170 129 198 109 251 114 245 58" fill="none" stroke="#9c7312" stroke-width="4" stroke-dasharray="6 5"/>
+</svg>
+<span class="map-label old">OLD MANALI</span><span class="map-label river">BEAS RIVER</span>
+<span class="pin you" aria-label="You">S</span><span class="pin friend" tabindex="0" aria-label="Meera, simulated position">M</span>
+<span class="distance" id="distance">4.2 km</span>
+</div>
+<div class="phone-person"><span class="avatar">M</span><div><strong>Meera Kapoor</strong><small><i></i> Sharing location · Demo</small></div><button class="gold phone-call" data-call type="button"><span aria-hidden="true">✦</span> Call</button></div>
+<div class="phone-nav glass" aria-label="Trip shortcuts"><a href="#route-map">⌖<small>Map</small></a><a href="#expenses">₹<small>Bills</small></a><a href="#plans">◫<small>Plans</small></a><a href="#photos">▧<small>Photos</small></a></div>
+</div></div></section>
+<section id="features" class="section"><div class="section-title reveal"><p class="kicker">YOUR TRIP, TOGETHER</p><h2>Everything the group needs.</h2></div>
+<div class="feature-grid">
+<article class="glass card reveal"><span class="glyph">⌖</span><h3>Live location</h3><p>Share a spot with the crew and see who’s near the café, still on the road, or already at the stay.</p></article>
+<article class="glass card reveal"><span class="glyph">↝</span><h3>Route maps</h3><p>Find a meeting point and follow the route back to your friends when the group fans out.</p></article>
+<article class="glass card reveal"><span class="glyph">₹</span><h3>Split bills</h3><p>See exactly who paid, who owes, and who gets money back. Keep the maths out of the group chat.</p></article>
+<article class="glass card reveal"><span class="glyph">☎</span><h3>Call from the app</h3><p>Try the call screen and see how a shared route looks when a friend accepts.</p></article>
+<article class="glass card reveal"><span class="glyph">▧</span><h3>Shared photos</h3><p>Give everyone one place for the river walks, mountain views, and moments worth keeping.</p></article>
+<article class="glass card reveal"><span class="glyph">◫</span><h3>Plans and polls</h3><p>Put dinner to a vote and keep the winning plan easy for everyone to find.</p></article>
 </div></section>
-<section class="section wrap" id="install">
-<p class="eyebrow">INSTALL FROM THIS WEBSITE</p><h2>Take Trip Friend with you.</h2>
-<div class="grid"><article class="card"><h3>Android</h3><p>Open this site in Chrome and tap Install Trip Friend. If the install prompt is unavailable, open Chrome’s menu and choose Install app or Add to Home screen.</p></article>
-<article class="card"><h3>iPhone</h3><p>Open this site in Safari. Tap Share, then Add to Home Screen. Open Trip Friend from its icon when you’re ready.</p></article></div>
-<div class="actions"><button id="install-app" type="button">Install Trip Friend</button><a href="./app.html">Continue in browser</a></div><p id="install-status" role="status"></p><p><a href="./help.html">Phone setup, notification test, and read-aloud guide</a></p>
-</section>
-<section class="section wrap" id="faq"><p class="eyebrow">GETTING STARTED</p><h2>A few things to know.</h2>
-<details><summary>How do I start a trip?</summary><p>Open the demo to enter a sample trip with five friends. In the planned connected app, a trip creator can invite friends, plan stops, pin announcements, and close the trip.</p></details>
-<details><summary>Can I install Trip Friend on my phone?</summary><p>On Android, open the site in Chrome and use its install or home screen option when available. On iPhone, open it in Safari, tap Share, then Add to Home Screen. You can also use the browser directly.</p></details>
-<details><summary>Will calls work over Bluetooth or satellite?</summary><p>The demo previews the walkie-talkie and incoming-call screens. Live group audio would use the internet. Bluetooth phone-to-phone voice and satellite communication are outside this web version’s capabilities.</p></details>
-<details><summary>Can I try reminders and custom sounds?</summary><p>Yes. Try a repayment reminder in Expenses, or upload and preview a sound in Chat. The demo displays alerts locally. In a connected version, closed-app alerts would depend on browser and device settings, and uploaded sounds would play inside the open app.</p></details>
-<details><summary>Will my friends see what I enter?</summary><p>Demo expenses, messages and photos stay in this browser. Sample map pins and call alerts illustrate how the connected app would work. The demo requests no GPS access and moves no money.</p></details>
-</section>
-<section class="wrap end"><h2>Take the sample trip for a spin.</h2><a class="button" href="./app.html">Open Trip Friend ↗</a></section>
+<section id="try" class="section"><div class="section-title reveal"><p class="kicker">INTERACTIVE DEMO</p><h2>A weekend in Manali.</h2><p>Try a sample trip with Meera, Aarav, Kavya, and you. Your changes stay in this browser.</p></div>
+<div class="demo-grid">
+<article class="glass card reveal" id="expenses"><div class="card-top"><h3>Split the bills</h3><span class="chip" id="total"></span></div>
+<form id="expense-form"><div class="fields"><label>Expense<input name="label" placeholder="Chai by the Beas" required maxlength="60"></label><label>Amount (₹)<input name="amount" type="number" min="0.01" max="100000" step="0.01" required placeholder="240"></label></div><label>Paid by<select name="payer"><option>You</option><option>Meera</option><option>Aarav</option><option>Kavya</option></select></label><button type="submit" class="blue">Add expense</button></form>
+<p class="fine">Split equally among four friends. Any extra paise go to the first names in the list.</p><ul id="expense-list" class="data-list"></ul><h4>Net balances</h4><ul id="balances" class="data-list" aria-live="polite"></ul></article>
+<article class="glass card reveal" id="plans"><div class="card-top"><h3>What’s for dinner?</h3><span class="chip">Group poll</span></div><p>Pick one spot for tonight. You can change your vote.</p><div id="poll" class="poll"></div><div class="plan-footer"><h4>Tonight’s plan</h4><ul id="plan-list" class="data-list"></ul><button id="add-plan" class="gold" type="button">+ Add plan</button></div></article>
+</div></section>
+<section class="section" id="calling"><div class="section-title reveal"><p class="kicker">STAY CLOSE</p><h2>How a call works.</h2><p>Try the call flow here with a simulated friend and route.</p></div>
+<ol class="steps"><li class="glass card reveal"><span class="step">1</span><h3>Tap Call</h3><p>Start from your friend’s trip card.</p></li><li class="glass card reveal"><span class="step">2</span><h3>They get a ring</h3><p>A connected app can send a call alert and a tone when notifications are enabled.</p></li><li class="glass card reveal"><span class="step">3</span><h3>Find each other</h3><p>When both friends share location, open the route from the call screen.</p></li></ol>
+<button class="gold" data-call type="button">✦ Try a call</button></section>
+<section class="section" id="photos"><div class="section-title reveal"><p class="kicker">THE TRIP ALBUM</p><h2>Wish you were there.</h2></div>
+<div class="album" id="album"></div><p class="fine">Manali photography by <a href="https://unsplash.com/photos/a-mountain-valley-with-a-river-running-through-it-VXrTFLdyk8w">Sajal Das</a> and <a href="https://unsplash.com/photos/a-rocky-river-bed--4o2bp04mio">Aditya Chache</a> on Unsplash.</p></section>
+<section class="section" id="themes"><div class="section-title reveal"><p class="kicker">MAKE IT YOURS</p><h2>Set the mood.</h2><p>Pick a palette and a surface. Your choices are saved on this device.</p></div>
+<div class="glass card reveal picker"><fieldset><legend>Color theme</legend><div id="palette" class="choices"></div></fieldset><fieldset><legend>Surface style</legend><div id="surfaces" class="choices"></div></fieldset></div></section>
 </main>
-<footer class="wrap header"><a class="brand" href="./"><img src="./icon.svg" width="37" height="37" alt=""> Trip Friend</a><span>Interactive preview · Version <span data-version></span></span></footer>
-<script defer src="./release.js"></script>
+<footer class="glass site-footer"><div class="wrap footer-row"><div><a class="brand" href="./"><img src="./crown.svg" alt="" width="34" height="34">Trip Friend</a><p>Good trips are better together.</p></div><nav aria-label="Footer"><a href="#features">Features</a><a href="#try">Try it</a><a href="#themes">Themes</a><a href="./help.html">Help</a><a href="./app.html">Trip workspace</a></nav></div></footer>
+<nav class="bottom-nav glass" aria-label="Quick navigation"><a href="#features">Features</a><a href="#try">Try it</a><a href="#photos">Photos</a><a href="#themes">Themes</a></nav>
+<div class="guide"><div class="glass guide-sheet" id="tip" hidden><p id="suggestion"></p><button class="gold" id="guide-add" type="button">+ Add plan</button></div><button class="blue guide-toggle" aria-expanded="false" aria-controls="tip" id="guide-toggle" type="button">✦ Trip guide</button></div>
+<dialog id="call-dialog" class="glass modal" aria-labelledby="call-title"><div class="caller"><span class="ring"></span><span class="ring"></span><span class="avatar">M</span></div><p class="kicker">SIMULATED CALL</p><h2 id="call-title">Meera is calling</h2><div class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><p id="call-note">Preview the incoming call screen.</p><div class="actions"><button id="accept" class="gold" type="button">Accept</button><button id="hangup" class="outline" type="button">Decline</button></div></dialog>
+<dialog id="lightbox" class="glass modal lightbox" aria-label="Trip photo viewer"><button class="outline close-photo" type="button" aria-label="Close photo">✕</button><figure><img id="light-image" alt=""><figcaption id="light-caption"></figcaption></figure><div class="actions"><button id="prev-photo" class="outline" type="button">← Previous</button><button id="next-photo" class="outline" type="button">Next →</button></div></dialog>
+<dialog id="install" class="glass modal" aria-labelledby="install-title"><h2 id="install-title">Get Trip Friend</h2><p>On Android, open your browser menu and choose Install app or Add to Home screen. On iPhone, use Safari’s Share menu and choose Add to Home Screen.</p><p>You can also keep using Trip Friend in your browser.</p><form method="dialog"><button class="blue">Done</button></form></dialog>
+<dialog id="plan-dialog" class="glass modal" aria-labelledby="plan-title"><h2 id="plan-title">Add a plan</h2><form id="plan-form"><label>What’s the plan?<input name="plan" required maxlength="90"></label><div class="actions"><button type="submit" class="gold">Add plan</button><button class="outline" type="button" id="cancel-plan">Cancel</button></div></form></dialog>
+<p class="sr" id="notice" role="status"></p>
 </body></html>
