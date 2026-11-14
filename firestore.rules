@@ -5,40 +5,63 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email_verified == true;
     }
     function email() { return request.auth.token.email; }
-    function member(trip) { return verified() && email() in trip.memberEmails; }
-    function admin(trip) {
-      return verified() && request.auth.uid == trip.ownerUid && email() in trip.memberEmails;
+    function uid() { return request.auth.uid; }
+    function member(trip) {
+      return verified() && (email() in trip.memberEmails || uid() in trip.get('memberUids', []));
     }
-    function validTrip(trip) {
-      return trip.keys().hasAll(['name','ownerUid','memberEmails','createdAt'])
-        && trip.keys().hasOnly(['name','ownerUid','memberEmails','createdAt'])
-        && trip.name is string && trip.name.size() > 0 && trip.name.size() <= 80
-        && trip.memberEmails is list && trip.memberEmails.size() <= 20
-        && trip.memberEmails.toSet().size() == trip.memberEmails.size()
-        && email() in trip.memberEmails;
+    function admin(trip) {
+      return verified() && uid() == trip.ownerUid;
     }
     match /trips/{tripId} {
-      allow get: if member(resource.data);
+      function invitation() {
+        return get(/databases/$(database)/documents/trips/$(tripId)/invites/$(request.auth.token.email.lower())).data;
+      }
+      function claim() {
+        let old = resource.data.get('memberUids', []);
+        let invite = invitation();
+        return verified() && !(uid() in old) && invite.acceptedUid == ''
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberUids'])
+          && request.resource.data.memberUids == old.concat([uid()])
+          && request.resource.data.memberUids.size() <= 20
+          && getAfter(/databases/$(database)/documents/trips/$(tripId)/invites/$(request.auth.token.email.lower())).data.acceptedUid == uid();
+      }
+      allow get: if member(resource.data) || admin(resource.data);
       allow list: if request.query.limit <= 50 && member(resource.data);
-      allow create: if verified() && validTrip(request.resource.data)
-        && request.resource.data.ownerUid == request.auth.uid
-        && request.resource.data.memberEmails == [email()]
+      allow create: if verified()
+        && request.resource.data.keys().hasOnly(['name','ownerUid','memberEmails','memberUids','createdAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+        && request.resource.data.ownerUid == uid()
+        && request.resource.data.memberEmails == []
+        && request.resource.data.memberUids == [uid()]
         && request.resource.data.createdAt == request.time;
-      allow update: if admin(resource.data) && validTrip(request.resource.data)
-        && request.resource.data.memberEmails.hasAll(resource.data.memberEmails)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberEmails']);
+      allow update: if claim();
+      match /invites/{address} {
+        function trip() { return get(/databases/$(database)/documents/trips/$(tripId)).data; }
+        allow get: if admin(trip()) || (verified() && (email().lower() == address || resource.data.acceptedUid == uid()));
+        allow list: if admin(trip()) && request.query.limit <= 50;
+        allow create: if admin(trip()) && request.resource.data.keys().hasAll(['name','mobile','acceptedUid'])
+          && request.resource.data.keys().hasOnly(['name','mobile','acceptedUid'])
+          && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+          && request.resource.data.mobile is string && request.resource.data.mobile.size() >= 7 && request.resource.data.mobile.size() <= 22
+          && request.resource.data.acceptedUid == ''
+          && !(address in trip().memberEmails);
+        allow update: if verified() && email().lower() == address && resource.data.acceptedUid == ''
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['acceptedUid'])
+          && request.resource.data.acceptedUid == uid()
+          && uid() in getAfter(/databases/$(database)/documents/trips/$(tripId)).data.get('memberUids', []);
+      }
       match /expenses/{expenseId} {
         function trip() { return get(/databases/$(database)/documents/trips/$(tripId)).data; }
-        allow get: if member(trip());
-        allow list: if request.query.limit <= 100 && member(trip());
+        allow get: if member(trip()) || admin(trip());
+        allow list: if request.query.limit <= 100 && (member(trip()) || admin(trip()));
         allow create: if admin(trip())
           && request.resource.data.keys().hasAll(['label','paise','payer','participants','createdAt'])
           && request.resource.data.keys().hasOnly(['label','paise','payer','participants','createdAt'])
           && request.resource.data.label is string
           && request.resource.data.label.size() > 0 && request.resource.data.label.size() <= 80
-          && request.resource.data.paise is int
-          && request.resource.data.paise > 0 && request.resource.data.paise <= 100000000
-          && request.resource.data.participants == trip().memberEmails
+          && request.resource.data.paise is int && request.resource.data.paise > 0 && request.resource.data.paise <= 100000000
+          && request.resource.data.participants == trip().memberEmails.concat(trip().get('memberUids', []))
           && request.resource.data.payer in request.resource.data.participants
           && request.resource.data.createdAt == request.time;
       }

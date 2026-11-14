@@ -24,6 +24,10 @@
 <h2>Verify your email.</h2><p>Open the verification email, then return here and select Check verification.</p>
 <div class="actions"><button class="blue" id="check-email">Check verification</button><button class="outline" id="send-email">Send verification email</button></div>
 </section>
+<section class="glass card" id="join" hidden><h2>Accept your trip invitation</h2>
+<form id="accept-invite"><label>Invited email<input name="email" type="email" required autocomplete="email"></label><button class="blue">Accept invitation</button></form>
+<form id="set-password" hidden><label>Create password<input name="password" type="password" required minlength="6" autocomplete="new-password"></label><button class="blue">Save password</button></form></section>
+<details class="glass card" id="settings" hidden><summary>Account settings</summary><form id="change-email"><label>New email<input name="email" type="email" required autocomplete="email"></label><label>Current password<input name="password" type="password" required autocomplete="current-password"></label><button class="outline">Send verification to new email</button></form></details>
 <section id="workspace" class="trip-grid" hidden>
 <article class="glass card"><h2>Your trips</h2><p>Create a trip to start planning with friends.</p>
 <form id="create-trip"><label>Trip name <input name="name" placeholder="e.g. Manali weekend" required maxlength="80"></label><button class="blue">Create trip</button></form>
@@ -32,7 +36,12 @@
 <article class="glass card trip-empty" id="trip-empty" hidden><img src="./crown.svg" alt="" width="48" height="48"><h2>Open a trip</h2><p>Choose a trip to see your crew, shared expenses, and balances.</p></article>
 <article class="glass card" id="detail" hidden><h2 id="trip-name"></h2>
 <h3>Crew</h3><ul class="data-list" id="crew"></ul>
-<form id="invite" hidden><label>Friend’s email <input name="email" type="email" required maxlength="254"></label><button class="outline">Give access</button><p class="fine">Ask your friend to sign in with this email. The trip appears after they verify it.</p></form>
+<details id="member-panel" hidden><summary>Add member</summary><form id="invite">
+<div class="member-fields"><label>Name<input name="name" required maxlength="80" autocomplete="off"></label>
+<label>Mobile number<input name="mobile" type="tel" required minlength="7" maxlength="22" placeholder="+91 98765 43210"></label></div>
+<label>Email address<input name="email" type="email" required maxlength="254"></label>
+<p class="fine">Trip Friend emails the invitation. Your friend creates a password after opening the link.</p>
+<button class="blue">Send invite</button><p id="invite-status" role="status"></p></form><ul class="data-list" id="invites"></ul></details>
 <h3>Shared expenses</h3><p class="fine">The trip admin posts confirmed expenses. Each saved bill is split equally across the crew listed at the time.</p>
 <form id="record-expense" hidden>
 <label>Expense <input name="label" required maxlength="80"></label>
