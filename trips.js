@@ -14,10 +14,11 @@ const db = initializeFirestore(app, window.TripShell.native ? {
 const real = createRealTrip({
   subscribe: (id,path,field,direction,update,error) => onSnapshot(
     query(collection(db,'trips',id,path),orderBy(field,direction),limit(100)),
-    {includeMetadataChanges:true}, snapshot => update(snapshot.docs.map(item => ({...item.data(),id:item.id})),snapshot.metadata),error),
+    {includeMetadataChanges:true}, snapshot => update(snapshot.docs.map(item => ({...item.data(),id:item.id,pending:item.metadata.hasPendingWrites})),snapshot.metadata),error),
   write: (id,path,data,key) => key
     ? setDoc(doc(db,'trips',id,path,key),{...data,updatedAt:serverTimestamp()})
     : addDoc(collection(db,'trips',id,path),{...data,createdAt:serverTimestamp()}),
+  patch: (id,path,key,fields) => updateDoc(doc(db,'trips',id,path,key),fields),
   erase: (id,path,key) => deleteDoc(doc(db,'trips',id,path,key)),
   identity: () => auth.currentUser,
   openTrip: id => {
@@ -212,7 +213,7 @@ function showSession(user) {
         date.textContent = 'Created '+new Intl.DateTimeFormat('en-IN',{dateStyle:'medium'}).format(created);
         button.append(date);
       }
-      button.onclick = () => { if (window.TripShell.native) real.go(trip.id); else displayTrip(trip); };
+      button.onclick = () => { real.go(trip.id); };
       li.append(button);
       return li;
     }));
@@ -256,7 +257,7 @@ function displayTrip(trip) {
   const data = trip.data();
   const admin = data.ownerUid === auth.currentUser.uid;
   showTripMap(trip.id,admin);
-  real.select({id:trip.id,name:data.name,admin,closed:data.status === 'closed' || data.closed === true});
+  real.select({id:trip.id,name:data.name,admin,memberUids:[...new Set([data.ownerUid,...(data.memberUids || []),auth.currentUser.uid])],closed:data.status === 'closed' || data.closed === true});
   $('real-trip-list').hidden = window.TripShell.native;
   const share = $('native-share-trip');
   const nativeShare = window.Capacitor?.Plugins?.Share;
@@ -303,8 +304,10 @@ function displayTrip(trip) {
   stopExpenses = onSnapshot(query(collection(trip.ref,'expenses'),orderBy('createdAt','desc'),limit(100)), snapshot => {
     $('expense-status').textContent = '';
     const balances = new Map();
+    let total = 0;
     $('shared-expenses').replaceChildren(...snapshot.docs.map(expense => {
       const bill = expense.data();
+      total += bill.paise;
       const share = Math.floor(bill.paise/bill.participants.length);
       bill.participants.forEach((member,index) => {
         const difference = (member === bill.payer ? bill.paise : 0) - share - Number(index < bill.paise % bill.participants.length);
@@ -318,6 +321,7 @@ function displayTrip(trip) {
       active.querySelector('.trip-chip').textContent = snapshot.empty ? 'No expenses' :
         value === 0 ? 'Settled' : (value > 0 ? 'Gets back ' : 'Owes ')+money(Math.abs(value));
     }
+    $('real-wrap-summary').textContent = money(total)+' spent across '+snapshot.size+' recent expenses.';
     if (snapshot.empty) $('shared-expenses').append(row('No confirmed expenses yet.'));
     $('shared-balances').replaceChildren(...[...balances].map(([member,value]) => row((nameLookup.get(member) || (member.includes('@') ? member : 'Trip member'))+' · '+(value === 0 ? 'Settled' : value > 0 ? 'Gets back '+money(value) : 'Owes '+money(-value)))));
   }, () => { $('expense-status').textContent = 'Could not load shared expenses.'; });

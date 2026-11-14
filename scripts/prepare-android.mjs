@@ -5,7 +5,7 @@ import {existsSync} from 'node:fs';
 await rm('www',{recursive:true,force:true});
 await mkdir('www');
 const files = ['app.html','app.js','aurora.css','icons.svg','crown.svg','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest','release.js',
-  'trips.html','trips.js','trip-map.js','firebase-config.js','help.html','help.js','android-shell.css','android-shell.js','real-trip.js','trip-notifications.js','native-update.js'];
+  'trips.html','trips.js','trip-map.js','firebase-config.js','help.html','help.js','android-shell.css','android-shell.js','real-trip.js','crew-ui.js','trip-notifications.js','native-update.js'];
 for (const file of files) await copyFile(file,'www/'+file);
 await cp('photos','www/photos',{recursive:true});
 await writeFile('www/android-config.json',JSON.stringify({push:existsSync('google-services.json')}));

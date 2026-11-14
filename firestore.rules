@@ -56,6 +56,32 @@ service cloud.firestore {
       function activeTrip() {
         return parentTrip().get('status', '') != 'closed' && parentTrip().get('closed', false) != true;
       }
+      match /profiles/{userId} {
+        allow get: if crew();
+        allow list: if crew() && request.query.limit <= 100;
+        allow create, update: if crew() && activeTrip() && userId == uid()
+          && request.resource.data.keys().hasOnly(['name','updatedAt'])
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+          && request.resource.data.updatedAt == request.time;
+      }
+      match /packing/{itemId} {
+        allow get: if crew();
+        allow list: if crew() && request.query.limit <= 100;
+        allow create: if crew() && activeTrip()
+          && request.resource.data.keys().hasOnly(['item','assignee','checked','checkedBy','createdAt'])
+          && request.resource.data.item is string
+          && request.resource.data.item.size() > 0 && request.resource.data.item.size() <= 100
+          && request.resource.data.assignee is string
+          && (request.resource.data.assignee == '' || request.resource.data.assignee == parentTrip().ownerUid
+            || request.resource.data.assignee == uid() || request.resource.data.assignee in parentTrip().get('memberUids', []))
+          && request.resource.data.checked == false && request.resource.data.checkedBy == ''
+          && request.resource.data.createdAt == request.time;
+        allow update: if crew() && activeTrip()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['checked','checkedBy'])
+          && request.resource.data.checked is bool
+          && request.resource.data.checkedBy == (request.resource.data.checked ? uid() : '');
+      }
       match /plans/{planId} {
         allow get: if crew();
         allow list: if crew() && request.query.limit <= 100;

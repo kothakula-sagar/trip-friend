@@ -90,3 +90,11 @@ Open a real trip → Settings → Notifications. Enable alerts, choose Aurora ch
 Version 1.5.0 checks for the latest signed GitHub release at startup, on return to the app, and periodically while open. Publish future releases as `vX.Y.Z` with asset `TripFriend.apk`, the same package ID and signing key, and a higher Android version code. The app downloads the APK and opens Android’s package installer. The user confirms installation. On some phones Android first asks the user to allow installs from Trip Friend. Return and tap Update again after granting it.
 
 Install the first signed build manually to bootstrap the updater. Debug APKs use a different signing key and cannot update to a release-signed APK in place. On devices that allow notifications, the app posts one local alert per discovered version. Closed-app discovery requires a separate push sender.
+
+### Phase 1 checkpoint: chat identity and shared packing
+
+Publish the new Firestore rules for `trips/{id}/profiles/{uid}` and `trips/{id}/packing/{itemId}`. The app preserves the existing permissions and rejects writes to both new collections after a trip closes.
+
+On two phones, install the same APK from Build Trip Friend Android, then sign in as two verified members of one trip. Have both set a name in trip Settings. Send messages in both directions and verify initials, timestamps, pending and sent status, and the unread badge. Add and assign a packing item on one phone, then check it on the other. Disconnect one phone and verify that a queued message syncs on reconnection. Validate denied access with a separate account outside the trip. Android signing and installation instructions are in the Android package section.
+
+Phase 1 is incomplete. Cloud uploads, replies, reactions, presence map polish, and trip completion still need implementation and device/emulator verification. Phase 2 requires the earlier phase to pass first.

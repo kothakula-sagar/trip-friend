@@ -4,9 +4,52 @@ const native = shell.native;
 
 import {setupTripNotifications} from "./trip-notifications.js";
 
-export function createRealTrip({subscribe,write,erase,identity,openTrip,showList}) {
+import {renderChat} from "./crew-ui.js";
+
+export function createRealTrip({subscribe,write,patch,erase,identity,openTrip,showList}) {
   let trip, generation = 0, watch, watching = false, plans = [], subscriptions = [], lastWrite, positionBusy = false, queuedPosition;
   let routeDepth = 0;
+  let profiles = new Map(), messages = [], unread = 0;
+  function refreshChat() {
+    renderChat($('real-messages'),messages,profiles,identity());
+    const badge = $('real-chat-unread');
+    badge.hidden = unread === 0;
+    badge.textContent = String(unread);
+  }
+  function renderPacking(items) {
+    const checked = items.filter(item => item.checked).length;
+    $('real-pack-progress').max = items.length || 1;
+    $('real-pack-progress').value = checked;
+    $('real-pack-count').textContent = checked+' of '+items.length+' packed';
+    $('real-packing-items').replaceChildren(...items.map(item => {
+      const li = row('');
+      const label = document.createElement('label');
+      const control = document.createElement('input');
+      control.type = 'checkbox';
+      control.checked = item.checked;
+      control.disabled = trip.closed;
+      const id = trip.id;
+      control.onchange = () => {
+        const desired = control.checked;
+        patch(id,'packing',item.id,{checked:desired,checkedBy:desired ? identity().uid : ''}).catch(() => {
+          control.checked = !desired;
+          alert('Could not update this item. Try again.');
+        });
+      };
+      const assignee = profiles.get(item.assignee)?.name || (item.assignee === identity()?.uid ? 'You' : item.assignee ? 'Trip member' : '');
+      label.append(control,document.createTextNode(' '+item.item+(assignee ? ' · '+assignee : '')));
+      li.append(label);
+      return li;
+    }));
+    if (!items.length) $('real-packing-items').append(row('Nothing to pack yet. Add your first item.'));
+  }
+  function renderAssignees() {
+    const select = $('real-pack-form').elements.assignee;
+    const current = select.value;
+    select.replaceChildren(new Option('Unassigned',''),...trip.memberUids.map(id => new Option(
+      profiles.get(id)?.name || (id === identity()?.uid ? 'You' : 'Trip member'),id)));
+    if ([...select.options].some(option => option.value === current)) select.value = current;
+  }
   const notifications = setupTripNotifications({uid:() => identity()?.uid,openTrip:id => go(id,'chat')});
   const notice = message => { $('real-location-banner').textContent = message; };
   function row(text) {
@@ -32,6 +75,7 @@ export function createRealTrip({subscribe,write,erase,identity,openTrip,showList
       if (id && link.dataset.realGo === screen) link.setAttribute('aria-current','page');
       else link.removeAttribute('aria-current');
     });
+    if (screen === 'chat' && unread) { unread = 0; refreshChat(); }
     $('real-title').textContent = id ? trip.name : 'Trip Friend';
     $('real-tabs').hidden = !native || !id;
     $('real-add').hidden = !native || !id;
@@ -159,15 +203,15 @@ export function createRealTrip({subscribe,write,erase,identity,openTrip,showList
   function submit(id,collection,record) {
     $(id).addEventListener('submit',event => {
       event.preventDefault();
-      if (!trip) return;
+      if (!trip || trip.closed) return;
       const fields = new FormData(event.currentTarget);
       const data = record(fields);
       if (!data) return;
       const form = event.currentTarget;
-      const message = data.text || data.title;
+      const message = data.text || data.title || data.item;
       form.reset();
       write(trip.id,collection,data).catch(() => {
-        const input = form.querySelector(collection === 'plans' ? '[name=title]' : '[name=text]');
+        const input = form.querySelector('input');
         if (!input.value) input.value = message;
         alert('Could not save. Check your access and retry.');
       });
@@ -177,6 +221,18 @@ export function createRealTrip({subscribe,write,erase,identity,openTrip,showList
     const title = fields.get('title').trim(), time = new Date(fields.get('time'));
     return title && Number.isFinite(time.getTime()) ? {title,startsAt:time} : null;
   });
+  $('real-profile-form').onsubmit = async event => {
+    event.preventDefault();
+    if (!trip || trip.closed) return;
+    const name = new FormData(event.currentTarget).get('name').trim();
+    if (!name) return;
+    try { await write(trip.id,'profiles',{name},identity().uid); }
+    catch { alert('Could not save your name. Try again.'); }
+  };
+  submit('real-pack-form','packing',fields => {
+    const item = fields.get('item').trim();
+    return item ? {item,assignee:fields.get('assignee'),checked:false,checkedBy:''} : null;
+  });
   submit('real-chat-form','messages',fields => {
     const text = fields.get('text').trim();
     return text ? {text,authorUid:identity().uid} : null;
@@ -184,12 +240,14 @@ export function createRealTrip({subscribe,write,erase,identity,openTrip,showList
   return {
     go, route, render, stopLocation,
     select(value) {
-      if (value?.id === trip?.id && value?.closed === trip?.closed) { trip = value; render(); return; }
+      if (value?.id === trip?.id && value?.closed === trip?.closed) { trip = value; if (trip) renderAssignees(); render(); return; }
       stopLocation();
       generation++;
       subscriptions.forEach(stop => stop());
       subscriptions = [];
       trip = value;
+      profiles = new Map(); messages = []; unread = 0;
+      refreshChat();
       if (trip) notifications.refresh();
       plans = []; positions = []; updateCountdown(); renderPresence();
       $('real-plans').replaceChildren();
@@ -201,7 +259,19 @@ export function createRealTrip({subscribe,write,erase,identity,openTrip,showList
         const problem = id => () => { $(id).replaceChildren(row('Could not load this section. Check your connection and Firestore rules.')); };
         let seenMessages;
         let baseline;
+        let packing = [];
+        $('real-pack-form').hidden = trip.closed;
+        $('real-profile-form').hidden = trip.closed;
+        renderAssignees();
+        renderPacking(packing);
         subscriptions = [
+          subscribe(trip.id,'profiles','name','asc',items => {
+            profiles = new Map(items.map(item => [item.id,item]));
+            const field = $('real-profile-form').elements.name;
+            if (document.activeElement !== field) field.value = profiles.get(identity()?.uid)?.name || '';
+            renderAssignees(); renderPacking(packing); refreshChat();
+          },() => {}),
+          subscribe(trip.id,'packing','createdAt','asc',items => { packing = items; renderPacking(items); },problem('real-packing-items')),
           subscribe(trip.id,'plans','startsAt','asc',items => {
             plans = items;
             $('real-plans').replaceChildren(...items.map(plan => row(plan.title+' · '+new Date(plan.startsAt.toMillis()).toLocaleString())));
@@ -212,11 +282,13 @@ export function createRealTrip({subscribe,write,erase,identity,openTrip,showList
             if (!metadata.fromCache) {
               if (seenMessages && items.some(item => !seenMessages.has(item.id) && item.authorUid !== identity()?.uid && item.createdAt?.toMillis() > baseline)) {
                 notifications.alert(trip.id);
+                if (shell.route().screen !== 'chat') unread += items.filter(item =>
+                  !seenMessages.has(item.id) && item.authorUid !== identity()?.uid && item.createdAt?.toMillis() > baseline).length;
               }
               seenMessages = latest;
               baseline = Math.max(baseline ?? 0,...items.map(item => item.createdAt?.toMillis() || 0));
             }
-            $('real-messages').replaceChildren(...items.reverse().map(message => row((message.authorUid === identity()?.uid ? 'You' : 'Crew')+' · '+message.text)));
+            messages = items; refreshChat();
           },problem('real-messages')),
           subscribe(trip.id,'presence','updatedAt','desc',items => { positions = items; renderPresence(); },problem('real-presence'))
         ];
