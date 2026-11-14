@@ -135,9 +135,35 @@ function showSession(user) {
       const li = row('');
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'outline';
+      button.className = 'outline trip-tile';
       button.dataset.tripId = trip.id;
-      button.textContent = trip.data().name;
+      const data = trip.data();
+      const cover = document.createElement('img');
+      cover.src = './photos/beas.webp';
+      cover.alt = '';
+      cover.loading = 'lazy';
+      const title = document.createElement('strong');
+      title.textContent = data.name;
+      const crew = document.createElement('span');
+      crew.className = 'crew-stack';
+      crew.setAttribute('aria-label','Trip crew');
+      const members = [...data.memberEmails,...(data.memberUids || [])];
+      members.slice(0,4).forEach(member => {
+        const avatar = document.createElement('span');
+        avatar.textContent = member === auth.currentUser.uid || member === email() ? 'Y' : member.includes('@') ? member[0].toUpperCase() : '•';
+        crew.append(avatar);
+      });
+      const chip = document.createElement('span');
+      chip.className = 'chip trip-chip';
+      chip.textContent = members.length+' '+(members.length === 1 ? 'member' : 'members');
+      button.append(cover,title,crew,chip);
+      const created = data.createdAt?.toDate();
+      if (created) {
+        const date = document.createElement('time');
+        date.dateTime = created.toISOString();
+        date.textContent = 'Created '+new Intl.DateTimeFormat('en-IN',{dateStyle:'medium'}).format(created);
+        button.append(date);
+      }
       button.onclick = () => displayTrip(trip);
       li.append(button);
       return li;
@@ -224,6 +250,12 @@ function displayTrip(trip) {
       });
       return row(bill.label+' · '+money(bill.paise)+' · paid by '+(nameLookup.get(bill.payer) || (bill.payer.includes('@') ? bill.payer : 'Trip member')));
     }));
+    const active = [...$('trip-list').querySelectorAll('button')].find(button => button.dataset.tripId === trip.id);
+    if (active) {
+      const value = (balances.get(auth.currentUser.uid) || 0) + (balances.get(email()) || 0);
+      active.querySelector('.trip-chip').textContent = snapshot.empty ? 'No expenses' :
+        value === 0 ? 'Settled' : (value > 0 ? 'Gets back ' : 'Owes ')+money(Math.abs(value));
+    }
     if (snapshot.empty) $('shared-expenses').append(row('No confirmed expenses yet.'));
     $('shared-balances').replaceChildren(...[...balances].map(([member,value]) => row((nameLookup.get(member) || (member.includes('@') ? member : 'Trip member'))+' · '+(value === 0 ? 'Settled' : value > 0 ? 'Gets back '+money(value) : 'Owes '+money(-value)))));
   }, () => { $('expense-status').textContent = 'Could not load shared expenses.'; });

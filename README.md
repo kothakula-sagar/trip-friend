@@ -48,3 +48,11 @@ Test with two verified email accounts. The first account creates a trip and gran
 ### Email invitations
 
 Enable **Email link (passwordless sign-in)** under Firebase Authentication → Sign-in method → Email/Password, alongside Email/Password. Publish the updated firestore.rules. With two separate browser profiles, send an invite from a trip owner, open the email in the other profile, confirm the invited address, and create a password. Verify that the member can open the trip and sign in again with their password. New trips and accepted invitations use Firebase user IDs. Older trips with email-based membership must be migrated before those accounts change email. The invite email uses Firebase's email-link template and sending quota.
+
+### Ivory Regal UI refresh (1.2.0)
+
+- `app.html` and `app.js`: Manali demo, responsive tab indicator, sample call sheet, packing progress and recap. Existing features keep their IDs. Existing local demo records are carried forward.
+- `trips.html` and `trips.js`: shared glass header and trip cards with photo, crew, creation date and selected-trip balance.
+- `index.html` and `help.html`: shared icon and demo styling.
+- `aurora.css` and `icons.svg`: shared styles and line icons. The old `style.css` and `trips.css` were removed.
+- `sw.js`, `release.js`, and `release.json`: bumped to 1.2.0 together. The service worker precaches the shared icon sprite and removes the old stylesheet from the precache. Private trip data continues to load through Firebase.

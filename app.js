@@ -1,14 +1,36 @@
 'use strict';
-const names = ['Sagar', 'Satvik', 'Meera', 'Asha', 'Nikhil'];
-const key = 'trip-friend-demo-v1';
+const names = ['You', 'Meera', 'Aarav', 'Kavya'];
+const key = 'trip-friend-demo-v2';
 const $ = id => document.getElementById(id);
 const money = paise => new Intl.NumberFormat('en-IN', {style:'currency',currency:'INR'}).format(paise / 100);
 const initial = {
-  bills:[{id:'sample',title:'Hotel deposit',payer:'Satvik',shares:{Sagar:1000,Satvik:1000,Meera:0,Asha:0,Nikhil:0},amount:2000,mode:'equal'}],
+  bills:[{id:'sample',title:'Hotel deposit',payer:'Meera',shares:{You:1000,Meera:1000,Aarav:0,Kavya:0},amount:2000,mode:'equal'}],
   payments:{}, messages:[{name:'Meera',text:'Meet at the homestay by 5 PM?'}], vote:'', photos:[]
 };
 let state = structuredClone(initial);
-try { const saved = localStorage.getItem(key); if (saved) state = JSON.parse(saved); } catch {}
+try {
+  const saved = localStorage.getItem(key);
+  const legacy = localStorage.getItem('trip-friend-demo-v1');
+  if (saved) state = JSON.parse(saved);
+  else if (legacy) {
+    state = JSON.parse(legacy);
+    const rename = {Sagar:'You', Satvik:'Meera', Meera:'Aarav', Asha:'Kavya'};
+    const person = name => rename[name] || name;
+    state.bills = state.bills.map(bill => ({
+      ...bill, payer:person(bill.payer),
+      shares:Object.fromEntries(Object.entries(bill.shares).map(([name, amount]) => [person(name),amount])),
+      ...(bill.items ? {items:bill.items.map(item => ({...item,owner:person(item.owner)}))} : {})
+    }));
+    state.payments = Object.fromEntries(Object.entries(state.payments).map(([id,payment]) => {
+      const [bill,name] = id.split(':');
+      return [bill+':'+person(name),payment];
+    }));
+    state.messages = state.messages.map(message => ({...message,name:person(message.name)}));
+    if (state.closure) state.closure.confirmed = state.closure.confirmed.map(person);
+  }
+} catch {}
+if (state.bills.some(bill => bill.payer === 'Nikhil' || bill.shares.Nikhil > 0)) names.push('Nikhil');
+
 function say(message) { $('status').textContent = message; }
 function save() {
   try { localStorage.setItem(key, JSON.stringify(state)); return true; }
@@ -37,6 +59,8 @@ function navigate() {
     if (link.hash === '#' + id) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   });
+  document.querySelector('.tabs').style.setProperty('--tab-index', ['expenses','map','chat','album','packing','trip'].indexOf(id));
+  if (id === 'trip') renderRecap();
   say('');
 }
 window.addEventListener('hashchange', navigate);
@@ -55,7 +79,7 @@ for (const name of names) {
   label.prepend(checkbox);
   $('members').append(label);
 }
-form.elements.payer.value = 'Satvik';
+form.elements.payer.value = 'Meera';
 const selected = () => [...form.querySelectorAll('[name=member]:checked')].map(field => field.value);
 function amountInput() {
   const input = document.createElement('input');
@@ -174,7 +198,7 @@ form.addEventListener('submit', event => {
   state.bills.unshift({id:crypto.randomUUID(),title,payer:form.elements.payer.value,...split});
   if (save()) say('Expense saved in this browser.');
   form.reset();
-  form.elements.payer.value = 'Satvik';
+  form.elements.payer.value = 'Meera';
   configure();
   renderBills();
 });
@@ -191,7 +215,7 @@ function renderBills() {
     details.append(element('summary', bill.title + ' · ' + money(bill.amount) + ' paid by ' + bill.payer));
     for (const item of bill.items || []) details.append(element('div', item.name + ' · ' + money(item.value) + ' · ' + (item.owner === 'shared' ? 'Shared' : item.owner)));
     for (const name of names) {
-      const amount = bill.shares[name];
+      const amount = bill.shares[name] || 0;
       stats[name].share += amount;
       details.append(element('div', name + ' · ' + money(amount)));
       if (!amount || name === bill.payer) continue;
@@ -237,21 +261,21 @@ $('actor').addEventListener('change', renderBills);
 configure();
 renderBills();
 const places = {
-  Sagar:'Homestay · updated just now · accuracy ±25 m',
-  Satvik:'Coffee stop · updated 2 min ago · accuracy ±30 m',
-  Meera:'Viewpoint · last seen 15 min ago · accuracy ±40 m',
-  Asha:'Town centre · updated 4 min ago · accuracy ±20 m',
-  Nikhil:'Market · updated 1 min ago · accuracy ±15 m'
+  You:'Manali homestay · updated just now · accuracy ±25 m',
+  Meera:'Old Manali bridge · updated 2 min ago · accuracy ±30 m',
+  Aarav:'Beas riverside · last seen 15 min ago · accuracy ±40 m',
+  Kavya:'Old Manali café · updated 4 min ago · accuracy ±20 m'
 };
 let sharing = true;
 document.querySelectorAll('[data-pin]').forEach(pin => pin.addEventListener('click', () => {
+  document.querySelectorAll('[data-pin]').forEach(button => button.setAttribute('aria-pressed',String(button === pin)));
   const name = pin.dataset.pin;
-  $('pin-info').textContent = name + ' · ' + (name === 'Sagar' && !sharing ? 'Location sharing paused' : places[name]);
+  $('pin-info').textContent = name + ' · ' + (name === 'You' && !sharing ? 'Location sharing paused' : places[name]);
 }));
 $('sharing').addEventListener('click', () => {
   sharing = !sharing;
   $('sharing').textContent = (sharing ? 'Pause' : 'Resume') + ' sample location sharing';
-  $('pin-info').textContent = sharing ? 'Sagar · ' + places.Sagar : 'Sagar · Location sharing paused';
+  $('pin-info').textContent = sharing ? 'You · ' + places.You : 'You · Location sharing paused';
 });
 function renderMessages() {
   $('messages').replaceChildren(...state.messages.map(message => {
@@ -265,7 +289,7 @@ $('message').addEventListener('submit', event => {
   if (state.closure?.closed) return say('This trip is closed and read-only.');
   const text = event.target.elements.text.value.trim();
   if (!text) return;
-  state.messages.push({name:'Sagar',text});
+  state.messages.push({name:'You',text});
   if (save()) say('Message added to this demo chat.');
   event.target.reset();
   renderMessages();
@@ -282,7 +306,7 @@ document.querySelectorAll('[data-vote]').forEach(option => option.addEventListen
   renderVote();
 }));
 renderVote();
-for (const [id,message] of Object.entries({voice:'Demo alert · Sagar sent a voice note. Tap the alert to open the chat.',call:'Demo alert · Sagar is calling. In the connected app, friends could tap to join.'})) {
+for (const [id,message] of Object.entries({voice:'Demo alert · You sent a voice note. Tap the alert to open the chat.',call:'Demo alert · You is calling. In the connected app, friends could tap to join.'})) {
   $(id).addEventListener('click', () => { $('call-info').hidden = false; $('call-info').textContent = message; });
 }
 let soundUrl;
@@ -329,14 +353,22 @@ renderPhotos();
 const suggestedPacking = ['Phone charger', 'Power bank and cable', 'Offline route and booking details', 'Water bottle', 'First-aid kit', 'Rain jacket'];
 state.packing ??= suggestedPacking.map(name => ({name, checked:false}));
 state.closure ??= {requested:false, confirmed:[], closed:false};
+function updatePackingProgress() {
+  const checked = state.packing.filter(item => item.checked).length;
+  $('packing-progress').max = state.packing.length || 1;
+  $('packing-progress').value = checked;
+  $('packing-count').textContent = checked+' of '+state.packing.length+' packed';
+}
 function renderPacking() {
+  updatePackingProgress();
+
   $('packing-list').replaceChildren(...state.packing.map(item => {
     const label = element('label', ' ' + item.name);
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = item.checked;
     checkbox.disabled = state.closure.closed;
-    checkbox.addEventListener('change', () => { item.checked = checkbox.checked; save(); });
+    checkbox.addEventListener('change', () => { item.checked = checkbox.checked; save(); updatePackingProgress(); });
     label.prepend(checkbox);
     return label;
   }));
@@ -375,12 +407,12 @@ function renderClosure() {
   }
   if (!closure.requested) {
     view.append(element('p', pending ? pending + ' repayment(s) still need confirmation.' : 'All repayments are settled.', 'notice'));
-    if (actor === 'Satvik' && !pending) {
+    if (actor === 'Meera' && !pending) {
       view.append(button('Request trip completion', () => {
         if (pendingRepayments()) return;
         closure.requested = true;
         save();
-        say('Demo notification sent to all five friends.');
+        say('Demo notification sent to the whole crew.');
         renderClosure();
       }));
     }
@@ -403,3 +435,25 @@ form.addEventListener('submit', renderClosure);
 $('closure-actor').addEventListener('change', renderClosure);
 renderPacking();
 renderClosure();
+
+function renderRecap() {
+  const spend = state.bills.reduce((sum,bill) => sum+bill.amount,0);
+  $('recap').textContent = money(spend)+' spent · '+state.photos.length+' photos · '+(state.vote ? 'Your breakfast vote: '+state.vote : 'No breakfast vote yet');
+}
+
+const callSheet = $('demo-call-sheet');
+$('call').addEventListener('click', () => {
+  callSheet.classList.remove('connected');
+  $('demo-call-title').textContent = 'Meera is calling';
+  $('demo-call-route').hidden = true;
+  $('demo-accept').hidden = false;
+  callSheet.showModal();
+});
+$('demo-accept').addEventListener('click', () => {
+  callSheet.classList.add('connected');
+  $('demo-call-title').textContent = 'Connected to Meera';
+  $('demo-call-route').hidden = false;
+  $('demo-accept').hidden = true;
+  $('demo-call-route').querySelector('a').focus();
+});
+$('demo-call-route').querySelector('a').addEventListener('click', () => callSheet.close());
