@@ -14,10 +14,13 @@
   const entry = document.createElement('button');
   entry.type = 'button';
   entry.className = 'outline';
-  entry.hidden = true;
-  document.querySelector('[data-real-screen="settings"]')?.append(entry);
+  entry.textContent = 'Check for app update';
+  const updateSettings = document.querySelector('[data-real-screen="settings"]');
+  const result = document.createElement('p');
+  result.setAttribute('role','status');
+  updateSettings?.append(entry,result);
   let version, checking = false, offered, lastCheck = 0;
-  entry.onclick = () => { if (!dialog.open) dialog.showModal(); };
+  entry.onclick = () => check(true,true);
   button.onclick = async () => {
     button.disabled = true;
     status.textContent = 'Downloading the APK…';
@@ -49,21 +52,24 @@
   }
   LocalNotifications?.addListener('localNotificationActionPerformed',event => {
     if (event.notification.extra?.appUpdate) {
-      if (version) entry.click();
+      if (version && !dialog.open) dialog.showModal();
       else check(true);
     }
   });
-  async function check(force = false) {
+  async function check(force = false, manual = false) {
     if (checking || (!force && Date.now()-lastCheck < 60000)) return;
     checking = true;
+    if (manual) result.textContent = 'Checking for an update…';
     try {
       const installed = await App.getInfo();
       const response = await fetch('https://api.github.com/repos/kothakula-sagar/trip-friend/releases/latest',{cache:'no-store'});
-      if (!response.ok) return;
+      if (response.status === 404) { if (manual) result.textContent = 'No signed update is available yet.'; return; }
+      if (!response.ok) throw Error();
       const release = await response.json();
       const tag = release.tag_name;
-      if (!/^v\d{1,5}\.\d{1,5}\.\d{1,5}$/.test(tag) || !newer(tag,installed.version)) return;
-      if (!release.assets?.some(asset => asset.name === 'TripFriend.apk')) return;
+      if (!/^v\d{1,5}\.\d{1,5}\.\d{1,5}$/.test(tag) || !newer(tag,installed.version)) { if (manual) result.textContent = 'You have the latest available version.'; return; }
+      if (!release.assets?.some(asset => asset.name === 'TripFriend.apk')) { if (manual) result.textContent = 'No signed update is available yet.'; return; }
+      result.textContent = '';
       version = tag;
       entry.textContent = 'Install '+tag;
       entry.hidden = false;
@@ -73,7 +79,7 @@
         if (!dialog.open && !document.querySelector('dialog[open]')) dialog.showModal();
       }
       await alertOnce(tag);
-    } catch {} finally { checking = false; lastCheck = Date.now(); }
+    } catch { if (manual) result.textContent = 'Could not check for updates. Try again when connected.'; } finally { checking = false; lastCheck = Date.now(); }
   }
   App.addListener('appStateChange',event => { if (event.isActive) check(); });
   addEventListener('online',() => check());

@@ -109,6 +109,12 @@ export function setupTripNotifications({uid,openTrip}) {
     reader.onerror = () => message('Could not read that audio file.');
     reader.readAsDataURL(file);
   };
+  $('trip-permission-alerts').onclick = async () => {
+    try {
+      if (!plugin) { message('This browser can preview sounds. Android system alerts are available in the installed app.'); return; }
+      message(await ensurePermission() ? 'Android notification permission is enabled.' : 'Notifications are off. You can enable them in Android Settings.');
+    } catch { message('Could not check notification permission.'); }
+  };
   $('trip-alert-test').onclick = async () => {
     try {
       if (!(await ensurePermission())) return message('Allow Trip Friend notifications in Android Settings.');

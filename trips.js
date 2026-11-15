@@ -1,5 +1,5 @@
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js';
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,sendEmailVerification,signOut,reload,getIdToken,sendSignInLinkToEmail,isSignInWithEmailLink,signInWithEmailLink,updatePassword,verifyBeforeUpdateEmail,reauthenticateWithCredential,EmailAuthProvider} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
+import {getAuth,setPersistence,browserLocalPersistence,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,sendEmailVerification,signOut,reload,getIdToken,sendSignInLinkToEmail,isSignInWithEmailLink,signInWithEmailLink,updatePassword,verifyBeforeUpdateEmail,reauthenticateWithCredential,EmailAuthProvider} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,addDoc,doc,query,where,limit,orderBy,onSnapshot,serverTimestamp,updateDoc,arrayUnion,getDocFromServer,getDoc,setDoc,writeBatch,or,getDocs,deleteDoc} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js';
 import {createTripMap} from './trip-map.js';
 import {createRealTrip} from './real-trip.js';
@@ -235,7 +235,9 @@ function showSession(user) {
       : 'Could not load trips. Reload the page to retry.';
   });
 }
-onAuthStateChanged(auth,showSession,showError);
+setPersistence(auth,browserLocalPersistence).catch(() => {
+  status('Persistent sign-in storage is unavailable on this device.');
+}).finally(() => onAuthStateChanged(auth,showSession,showError));
 submit('create-trip',async fields => {
   const name = fields.get('name').trim();
   if (!name) return status('Enter a trip name.');
@@ -282,7 +284,39 @@ function displayTrip(trip) {
     $('invites').replaceChildren(...snapshot.docs.map(item => {
       const value = item.data();
       if (value.acceptedUid) nameLookup.set(value.acceptedUid,value.name);
-      return row(value.name+' · '+item.id+' · '+(value.acceptedUid ? 'Joined' : 'Pending'));
+      const li = row(value.name+' · '+item.id+' · '+(value.acceptedUid ? 'Joined' : 'Pending'));
+      if (value.acceptedUid || data.status === 'closed' || data.status === 'closing' || data.closed) return li;
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+      for (const [label,run] of [
+        ['Edit invite',async () => {
+          const name = prompt('Member name',value.name)?.trim();
+          if (!name || name.length > 80) return;
+          const mobile = prompt('Mobile number',value.mobile)?.trim();
+          if (!mobile || !/^\+?[0-9 ()-]{7,22}$/.test(mobile)) return;
+          await updateDoc(item.ref,{name,mobile});
+          status('Invitation updated.');
+        }],
+        ['Delete invite',async () => {
+          if (!confirm('Delete the pending invitation for '+value.name+'?')) return;
+          await deleteDoc(item.ref);
+          status('Invitation deleted.');
+        }]
+      ]) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'outline';
+        button.textContent = label;
+        button.onclick = async () => {
+          button.disabled = true;
+          try { await run(); if (selected === trip.id) displayTrip(trip); }
+          catch (error) { showError(error,label); }
+          finally { button.disabled = false; }
+        };
+        actions.append(button);
+      }
+      li.append(actions);
+      return li;
     }));
     renderCrew();
   }).catch(() => {});

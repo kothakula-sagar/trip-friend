@@ -46,6 +46,15 @@ service cloud.firestore {
           && request.resource.data.mobile is string && request.resource.data.mobile.size() >= 7 && request.resource.data.mobile.size() <= 22
           && request.resource.data.acceptedUid == ''
           && !(address in trip().memberEmails);
+        function pendingAdmin() {
+          return admin(trip()) && resource.data.acceptedUid == ''
+            && trip().get('status', 'active') == 'active' && trip().get('closed', false) == false;
+        }
+        allow delete: if pendingAdmin();
+        allow update: if pendingAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','mobile'])
+          && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+          && request.resource.data.mobile is string && request.resource.data.mobile.size() >= 7 && request.resource.data.mobile.size() <= 22;
         allow update: if verified() && email().lower() == address && resource.data.acceptedUid == ''
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['acceptedUid'])
           && request.resource.data.acceptedUid == uid()

@@ -114,3 +114,7 @@ Worker deployment configuration uses the `UID_RATE_LIMIT` binding and the secret
 | [Firestore Spark](https://firebase.google.com/docs/firestore/quotas) | 50,000 reads, 20,000 writes and 20,000 deletes daily. 1 GiB stored. | Keep limited queries and use a demo-project emulator for tests. |
 | [Firebase Authentication Spark](https://firebase.google.com/docs/auth/limits) | 1,000 verification emails and 5 email-link sign-in emails daily. | Handle quotas in the account step and keep invite fallback bound to a verified address. |
 | [Cloudflare Workers Free](https://developers.cloudflare.com/workers/platform/limits/) | 100,000 requests daily, 10 ms CPU and 50 subrequests per invocation. | Verify tokens and limit membership checks to 20 requests per UID per minute per location. No paid resources are provisioned. |
+
+### Real trip controls in 1.5.3
+
+Trip Settings has notification permission, location sharing controls, and an Android update check. Keep installing signed releases using the same signing key and a higher version code. Publish the checked-in Firestore rules before testing profile name saves and pending invitation controls. Trip admins can edit the name and phone number of an unaccepted invite, or delete it while the trip is active. Accepted membership removal remains part of the balance-aware crew workflow.

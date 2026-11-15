@@ -226,8 +226,16 @@ export function createRealTrip({subscribe,write,patch,erase,identity,openTrip,sh
     if (!trip || trip.closed) return;
     const name = new FormData(event.currentTarget).get('name').trim();
     if (!name) return;
-    try { await write(trip.id,'profiles',{name},identity().uid); }
-    catch { alert('Could not save your name. Try again.'); }
+    const feedback = $('trip-profile-status');
+    feedback.textContent = 'Saving your name…';
+    try {
+      await write(trip.id,'profiles',{name},identity().uid);
+      feedback.textContent = 'Name saved.';
+    } catch (error) {
+      feedback.textContent = error.code === 'permission-denied'
+        ? 'Firestore denied this change. Check that the trip is active and publish the current profile rules.'
+        : 'Could not save your name. Try again when connected.';
+    }
   };
   submit('real-pack-form','packing',fields => {
     const item = fields.get('item').trim();
