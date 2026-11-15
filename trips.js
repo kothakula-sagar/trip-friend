@@ -169,7 +169,7 @@ function showSession(user) {
   $('trip-list').replaceChildren();
   $('detail').hidden = true;
   $('trip-empty').hidden = window.TripShell.native || !user?.emailVerified;
-  $('list-status').textContent = user?.emailVerified ? 'Loading trips…' : '';
+  window.TripShell.state($('list-status'), user?.emailVerified ? 'loading' : 'idle', user?.emailVerified ? 'Loading trips…' : '');
   $('account').hidden = !!user || linkInProgress;
   $('settings').hidden = !user?.emailVerified || linkInProgress;
   $('verification').hidden = !user || user.emailVerified;
@@ -178,7 +178,7 @@ function showSession(user) {
   status(user?.emailVerified ? 'Signed in as '+user.email : user ? 'Email verification required.' : 'Sign in or create an account.');
   if (!user?.emailVerified || linkInProgress) { $('workspace').hidden = true; return; }
   stopTrips = onSnapshot(query(collection(db,'trips'),or(where('memberEmails','array-contains',email()),where('memberUids','array-contains',user.uid)),limit(50)), snapshot => {
-    $('list-status').textContent = '';
+    window.TripShell.state($('list-status'), 'ready');
     tripRows = snapshot.docs;
     $('trip-list').replaceChildren(...tripRows.map(trip => {
       const li = row('');

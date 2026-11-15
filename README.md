@@ -98,3 +98,19 @@ Publish the new Firestore rules for `trips/{id}/profiles/{uid}` and `trips/{id}/
 On two phones, install the same APK from Build Trip Friend Android, then sign in as two verified members of one trip. Have both set a name in trip Settings. Send messages in both directions and verify initials, timestamps, pending and sent status, and the unread badge. Add and assign a packing item on one phone, then check it on the other. Disconnect one phone and verify that a queued message syncs on reconnection. Validate denied access with a separate account outside the trip. Android signing and installation instructions are in the Android package section.
 
 Phase 1 is incomplete. Cloud uploads, replies, reactions, presence map polish, and trip completion still need implementation and device/emulator verification. Phase 2 requires the earlier phase to pass first.
+
+## Phase 1 foundations checkpoint
+
+The Worker skeleton exposes only `GET /membership?tripId=…` with a verified Firebase ID token, UID membership, strict browser origins and a per-UID rate limit. The rate-limit binding applies per Cloudflare location, while the account quota is global. Legacy email-only membership is not accepted by the Worker. Existing Firestore rules and indexes are unchanged at this checkpoint. The storage adapter defines upload, getUrl and delete and will receive a provider in the media step. No production Worker is deployed by these changes.
+
+For local validation, run `npm ci`, `npm test`, then `npm run test:rules` with Java 21. The rules suite uses demo-tripfriend, not the production project. Android build, signing, and installation use the existing Android package instructions. For a two-phone smoke test, install the same test APK on both phones, sign in with verified accounts, accept an invite, open the same trip, test a message, and confirm an outside account cannot open the trip. Installer behavior, TalkBack, large text and real phone performance remain hardware checks.
+
+Worker deployment configuration uses the `UID_RATE_LIMIT` binding and the secret `FIREBASE_SERVICE_ACCOUNT_JSON`. Use a dedicated service account with only the read privileges needed by this endpoint. Keep the existing Android configuration and signing secret names from the Android package section.
+
+### Free limits
+
+| Provider | Checked on 2026-11-15 | Foundation design |
+| --- | --- | --- |
+| [Firestore Spark](https://firebase.google.com/docs/firestore/quotas) | 50,000 reads, 20,000 writes and 20,000 deletes daily. 1 GiB stored. | Keep limited queries and use a demo-project emulator for tests. |
+| [Firebase Authentication Spark](https://firebase.google.com/docs/auth/limits) | 1,000 verification emails and 5 email-link sign-in emails daily. | Handle quotas in the account step and keep invite fallback bound to a verified address. |
+| [Cloudflare Workers Free](https://developers.cloudflare.com/workers/platform/limits/) | 100,000 requests daily, 10 ms CPU and 50 subrequests per invocation. | Verify tokens and limit membership checks to 20 requests per UID per minute per location. No paid resources are provisioned. |

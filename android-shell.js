@@ -8,8 +8,13 @@ window.TripShell = {
       else handler();
     });
   },
+  state(element, state, detail = '') {
+    element.dataset.tripState = state;
+    element.setAttribute('aria-busy',String(state === 'loading'));
+    element.textContent = detail;
+  },
   route(hash = location.hash) {
-    const match = /^#trip\/([A-Za-z0-9]{20})\/(home|map|bills|chat|photos|plans|packing|wrapup|settings)$/.exec(hash);
+    const match = /^#trip\/([A-Za-z0-9]{20})\/(home|map|bills|chat|photos|plans|packing|crew|activity|guide|wrapup|settings)$/.exec(hash);
     return match ? {id:match[1], screen:match[2]} : {id:null, screen:'trips'};
   }
 };

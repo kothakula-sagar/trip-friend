@@ -4,3 +4,5 @@ android/
 google-services.json
 *.jks
 *.keystore
+
+firestore-debug.log
