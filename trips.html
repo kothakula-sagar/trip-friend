@@ -36,6 +36,7 @@
 </article>
 <article class="glass card trip-empty" id="trip-empty" hidden><img src="./crown.svg" alt="" width="48" height="48"><h2>Open a trip</h2><p>Choose a trip to see your crew, shared expenses, and balances.</p></article>
 <article class="glass card" id="detail" hidden><h2 id="trip-name"></h2>
+<nav id="real-tabs" class="native-tabs glass" aria-label="Trip tabs" hidden><a data-real-go="home"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#plan"></use></svg>Home</a><a data-real-go="map"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#pin"></use></svg>Map</a><a data-real-go="bills"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#rupee"></use></svg>Bills</a><a data-real-go="chat"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#bell"></use></svg>Chat <span id="real-chat-unread" class="chat-unread" hidden aria-label="Unread messages"></span></a><a data-real-go="photos"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#image"></use></svg>Photos</a></nav>
 <section data-real-screen="home"><h3>Today</h3><p id="real-next-plan" role="status">No upcoming plan.</p><p><a data-real-go="plans" class="button outline">Plans</a> <a data-real-go="settings" class="button outline">Settings</a> <a data-real-go="packing" class="button outline">Packing</a> <a data-real-go="wrapup" class="button outline">Wrap-up</a></p>
 <h3>Who is where</h3><ul id="real-presence" class="data-list"></ul><h3>Crew</h3><button id="native-share-trip" class="outline" type="button" hidden>Share trip link</button><ul class="data-list" id="crew"></ul>
 <details id="member-panel" hidden><summary>Add member</summary><form id="invite">
@@ -84,7 +85,7 @@
 </main>
 <div id="real-splash" hidden class="native-splash"><img src="./crown.svg" width="80" height="80" alt="Trip Friend"></div>
 
-<nav id="real-tabs" class="native-tabs glass" aria-label="Trip tabs" hidden><a data-real-go="home"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#plan"></use></svg>Home</a><a data-real-go="map"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#pin"></use></svg>Map</a><a data-real-go="bills"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#rupee"></use></svg>Bills</a><a data-real-go="chat"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#bell"></use></svg>Chat <span id="real-chat-unread" class="chat-unread" hidden aria-label="Unread messages"></span></a><a data-real-go="photos"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#image"></use></svg>Photos</a></nav>
+
 <button id="real-add" class="native-fab gold" type="button" hidden aria-label="Add to trip">+</button>
 <dialog id="real-sheet" class="modal glass native-sheet"><h2>Add to trip</h2><div class="native-actions"><a class="button gold" data-real-go="bills">Add expense</a><a class="button outline" data-real-go="plans">Add plan</a><a class="button outline" data-real-go="chat">Message crew</a></div><form method="dialog"><button class="outline">Close</button></form></dialog>
 <dialog id="real-exit" class="modal glass"><h2>Exit Trip Friend?</h2><button id="real-exit-confirm" class="outline">Exit</button><form method="dialog"><button class="outline">Stay</button></form></dialog>

@@ -24,3 +24,5 @@
 [data-trip-state=loading]{border-radius:8px;background:linear-gradient(100deg,#ffffff7a,#f5e5be86,#ffffff7a);background-size:210% 100%;animation:trip-loading 1.6s ease-in-out infinite}
 @keyframes trip-loading{to{background-position:-210% 0}}
 @media(prefers-reduced-motion:reduce){[data-trip-state=loading]{animation:none}}
+
+html:not(.native-runtime) #real-tabs:not([hidden]){display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:14px 0;padding:5px;border-radius:16px;background:#ffffff99}html:not(.native-runtime) #real-tabs a{min-width:0;padding:4px;overflow-wrap:anywhere;text-align:center}
