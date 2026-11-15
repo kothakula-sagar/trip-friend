@@ -77,6 +77,7 @@ export function createRealTrip({subscribe,write,patch,erase,identity,openTrip,sh
     });
     if (screen === 'chat' && unread) { unread = 0; refreshChat(); }
     $('real-title').textContent = id ? trip.name : 'Trip Friend';
+    document.documentElement.classList.toggle('trip-focused',Boolean(id));
     $('real-tabs').hidden = !id;
     if (screen === 'map') document.dispatchEvent(new Event('trip-map-open'));
     $('real-add').hidden = !native || !id;
@@ -88,6 +89,7 @@ export function createRealTrip({subscribe,write,patch,erase,identity,openTrip,sh
     if (location.hash === hash) return;
     history.pushState({tripDepth:++routeDepth},'',hash);
     route();
+    if (!native) window.scrollTo({top:0,behavior:'instant'});
   }
   function back() {
     if (history.state?.tripDepth > 0) history.back();

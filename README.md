@@ -128,3 +128,7 @@ Under Home → Crew → Add member, a trip admin can use **Remove member** for a
 Open **Your trips → New trip**, then **Home → Crew & invitations**. The organizer can request a Firebase email or generate a website link for direct sharing. The link still requires the invited Firebase email to be verified. Firebase controls its own email template and delivery. In the Firebase Console email-link template, add the public website address if that template permits customization. Test with two accounts and try the copy-link flow even when email delivery works.
 
 Open **Map** to see labeled crew markers and a list of recent sharers. Find me centers the map without publishing a location. A separate Share button starts live sharing. The saved meeting point links to external directions. Test launch, browser reload, role labels and pin navigation. This patch has no new Firestore rules, indexes, secrets or paid services.
+
+### Reference based trip navigation
+
+Wanderlog’s invite-by-email or message flow informed persistent Copy invite link on pending invitations. Life360’s member-first map informed the named pins and crew list. Trip Friend keeps location opt-in and shows only recent positions. Open an existing trip, then return using All trips or Android Back. Test a pending invite by copying its link after refreshing and accepting it with the verified invited address. Verify the Map screen shows the meeting point and directions above the map and recent sharers below it.

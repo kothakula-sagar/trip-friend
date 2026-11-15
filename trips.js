@@ -295,9 +295,16 @@ function displayTrip(trip) {
     $('invite-copy-url').value = '';
     $('invite-status').textContent = '';
   }
+  $('crew-feedback').textContent = '';
   $('trip-name').textContent = data.name;
   $('trip-role').textContent = admin ? 'You’re the trip admin' : 'You’re a trip member';
   $('member-panel').hidden = !admin;
+  $('crew-invite-action').hidden = !admin;
+  $('crew-invite-action').onclick = () => {
+    $('member-panel').open = true;
+    $('invite').elements.name.focus();
+    $('member-panel').scrollIntoView({block:'start'});
+  };
   $('crew-invites').hidden = !admin;
   $('invites').replaceChildren();
   nameLookup = new Map([[auth.currentUser.uid, 'You']]);
@@ -315,7 +322,8 @@ function displayTrip(trip) {
         li.append(remove);
         remove.onclick = async () => {
           if (!data.crewRemovalTracked || data.memberEmails.length) {
-            return status('This older trip needs a financial history check before members can be removed.', 'error');
+            $('crew-feedback').textContent = 'This older trip needs a financial history check before members can be removed.';
+            return;
           }
           if (!confirm('Remove '+value.name+' from this trip? They will lose access.')) return;
           remove.disabled = true;
@@ -342,6 +350,14 @@ function displayTrip(trip) {
       const actions = document.createElement('div');
       actions.className = 'actions';
       for (const [label,run] of [
+        ['Copy invite link',async () => {
+          const url = inviteLink(trip.id);
+          $('member-panel').open = true;
+          $('invite-copy-area').hidden = false;
+          $('invite-copy-url').value = url.href;
+          await copyInviteLink();
+          return false;
+        }],
         ['Edit invite',async () => {
           const name = prompt('Member name',value.name)?.trim();
           if (!name || name.length > 80) return;
@@ -362,7 +378,7 @@ function displayTrip(trip) {
         button.textContent = label;
         button.onclick = async () => {
           button.disabled = true;
-          try { await run(); if (selected === trip.id) displayTrip(trip); }
+          try { const refresh = await run(); if (refresh !== false && selected === trip.id) displayTrip(trip); }
           catch (error) { showError(error,label); }
           finally { button.disabled = false; }
         };
@@ -372,7 +388,7 @@ function displayTrip(trip) {
       return li;
     }));
     renderCrew();
-  }).catch(() => {});
+  }).catch(() => { if (selected === trip.id) $('crew-feedback').textContent = 'Could not load invitations. Reopen the trip to retry.'; });
   function renderCrew() {
     const name = id => nameLookup.get(id) || (id.includes('@') ? id : 'Trip member');
     $('crew').replaceChildren(...participants.map(id => row(name(id)+' · '+(id === data.ownerUid || (admin && id === email() && !(data.memberUids || []).includes(data.ownerUid)) ? 'Admin' : 'Member'))));
@@ -432,8 +448,7 @@ submit('invite',async (fields,action) => {
   if (!existing.exists()) await setDoc(ref,{name,mobile,acceptedUid:''});
   const url = new URL('https://kothakula-sagar.github.io/trip-friend/trips.html');
   url.searchParams.set('trip',tripId);
-  const fallback = new URL(url);
-  fallback.searchParams.set('join','1');
+  const fallback = inviteLink(tripId);
   if (selected !== tripId) return;
   $('invite-copy-area').hidden = false;
   $('invite-copy-url').value = fallback.href;
@@ -453,13 +468,20 @@ submit('invite',async (fields,action) => {
   if (trip) displayTrip(trip);
 
 });
-$('copy-invite').onclick = async () => {
+function inviteLink(tripId) {
+  const url = new URL('https://kothakula-sagar.github.io/trip-friend/trips.html');
+  url.searchParams.set('trip',tripId);
+  url.searchParams.set('join','1');
+  return url;
+}
+async function copyInviteLink() {
   const field = $('invite-copy-url');
   try {
     await navigator.clipboard.writeText(field.value);
     $('invite-status').textContent = 'Invite link copied.';
   } catch { field.focus(); field.select(); $('invite-status').textContent = 'Copy the selected link and share it with your friend.'; }
-};
+}
+$('copy-invite').onclick = copyInviteLink;
 $('join-shared-link').onclick = async () => {
   const button = $('join-shared-link');
   button.disabled = true;
