@@ -1,7 +1,7 @@
 import {after,before,test} from 'node:test';
 import {readFile} from 'node:fs/promises';
 import {assertFails,assertSucceeds,initializeTestEnvironment} from '@firebase/rules-unit-testing';
-import {collection,doc,deleteDoc,updateDoc,getDoc,getDocs,limit,query,serverTimestamp,setDoc} from 'firebase/firestore';
+import {collection,doc,deleteDoc,updateDoc,getDoc,getDocs,limit,query,serverTimestamp,setDoc,writeBatch} from 'firebase/firestore';
 let env;
 before(async () => {
   env = await initializeTestEnvironment({projectId:'demo-tripfriend',firestore:{rules:await readFile('firestore.rules','utf8')}});
@@ -46,4 +46,32 @@ test('Only the admin can edit or delete pending invites on active trips',async (
   await assertFails(deleteDoc(doc(admin,path('closed','pending@example.test'))));
   await assertSucceeds(updateDoc(doc(admin,pending),{name:'New name'}));
   await assertSucceeds(deleteDoc(doc(admin,pending)));
+});
+test('Admins can revoke exactly one member only on tracked active trips without expenses',async () => {
+  const admin = account('admin'), member = account('member');
+  const path = name => 'trips/'+name;
+  await env.withSecurityRulesDisabled(async context => {
+    for (const [name,status,tracked] of [['removable','active',true],['financed','active',true],['closing','closing',true],['legacy','active',false]]) {
+      await setDoc(doc(context.firestore(),path(name)),{
+        ownerUid:'admin',memberEmails:[],memberUids:['admin','member','another'],status,crewRemovalTracked:tracked
+      });
+    }
+  });
+  await assertFails(updateDoc(doc(member,path('removable')),{memberUids:['admin','another']}));
+  await assertFails(updateDoc(doc(admin,path('removable')),{memberUids:['admin']}));
+  await assertFails(updateDoc(doc(admin,path('removable')),{memberUids:['member','another']}));
+  await assertFails(updateDoc(doc(admin,path('legacy')),{memberUids:['admin','another']}));
+  await assertFails(updateDoc(doc(admin,path('closing')),{memberUids:['admin','another']}));
+  const bill = doc(admin,path('financed')+'/expenses/first');
+  const marker = doc(admin,path('financed')+'/finance/firstExpense');
+  const data = {label:'Tea',paise:300,payer:'admin',participants:['admin','member','another'],createdAt:serverTimestamp()};
+  await assertFails(setDoc(bill,data));
+  const batch = writeBatch(admin);
+  batch.set(marker,{expenseId:'first'});
+  batch.set(bill,data);
+  await assertSucceeds(batch.commit());
+  await assertFails(deleteDoc(marker));
+  await assertFails(updateDoc(doc(admin,path('financed')),{memberUids:['admin','another']}));
+  await assertSucceeds(updateDoc(doc(admin,path('removable')),{memberUids:['admin','another']}));
+  await assertFails(getDoc(doc(member,path('removable'))));
 });

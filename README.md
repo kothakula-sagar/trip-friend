@@ -118,3 +118,7 @@ Worker deployment configuration uses the `UID_RATE_LIMIT` binding and the secret
 ### Real trip controls in 1.5.3
 
 Trip Settings has notification permission, location sharing controls, and an Android update check. Keep installing signed releases using the same signing key and a higher version code. Publish the checked-in Firestore rules before testing profile name saves and pending invitation controls. Trip admins can edit the name and phone number of an unaccepted invite, or delete it while the trip is active. Accepted membership removal remains part of the balance-aware crew workflow.
+
+### Remove a joined member
+
+Under Home → Crew → Add member, a trip admin can use **Remove member** for a joined invitation. New UID-only trips track the first posted expense atomically. Removal is allowed before that expense, and only while the trip is active. Expense-bearing and older trips require a settlement or history check before removal is supported. Accepted invitations remain as records and cannot be reused after removal. Publish the new rules before testing. On two phones, accept an invite in a newly created trip, remove the member as admin, and confirm access is revoked after sync. Repeat with an expense and confirm removal is blocked.

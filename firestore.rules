@@ -28,14 +28,36 @@ service cloud.firestore {
       allow get: if member(resource.data) || admin(resource.data);
       allow list: if request.query.limit <= 50 && member(resource.data);
       allow create: if verified()
-        && request.resource.data.keys().hasOnly(['name','ownerUid','memberEmails','memberUids','createdAt'])
+        && request.resource.data.keys().hasOnly(['name','ownerUid','memberEmails','memberUids','createdAt','crewRemovalTracked'])
+        && request.resource.data.get('crewRemovalTracked', true) == true
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
         && request.resource.data.ownerUid == uid()
         && request.resource.data.memberEmails == []
         && request.resource.data.memberUids == [uid()]
         && request.resource.data.createdAt == request.time;
-      allow update: if claim();
+      function removing(before, after, target) {
+        return before.get('crewRemovalTracked', false) == true
+          && before.get('status', 'active') == 'active' && !before.get('closed', false)
+          && before.memberEmails == [] && target != before.ownerUid
+          && after.diff(before).affectedKeys().hasOnly(['memberUids'])
+          && target in before.memberUids
+          && after.memberUids == before.memberUids.removeAll([target])
+          && !existsAfter(/databases/$(database)/documents/trips/$(tripId)/finance/firstExpense);
+      }
+      function removeJoined() {
+        let removed = resource.data.memberUids.removeAll(request.resource.data.memberUids);
+        return admin(resource.data) && removed.size() == 1 && removing(resource.data, request.resource.data, removed[0]);
+      }
+      allow update: if claim() || removeJoined();
+      match /finance/firstExpense {
+        allow create: if admin(parentTrip()) && parentTrip().get('crewRemovalTracked', false) == true
+          && request.resource.data.keys().hasOnly(['expenseId'])
+          && request.resource.data.expenseId is string
+          && !exists(/databases/$(database)/documents/trips/$(tripId)/expenses/$(request.resource.data.expenseId))
+          && existsAfter(/databases/$(database)/documents/trips/$(tripId)/expenses/$(request.resource.data.expenseId));
+        allow get: if admin(parentTrip());
+      }
       match /invites/{address} {
         function trip() { return get(/databases/$(database)/documents/trips/$(tripId)).data; }
         allow get: if admin(trip()) || (verified() && (email().lower() == address || resource.data.acceptedUid == uid()));
@@ -146,7 +168,8 @@ service cloud.firestore {
           && request.resource.data.label is string
           && request.resource.data.label.size() > 0 && request.resource.data.label.size() <= 80
           && request.resource.data.paise is int && request.resource.data.paise > 0 && request.resource.data.paise <= 100000000
-          && request.resource.data.participants == trip().memberEmails.concat(trip().get('memberUids', []))
+          && request.resource.data.participants == getAfter(/databases/$(database)/documents/trips/$(tripId)).data.memberEmails.concat(getAfter(/databases/$(database)/documents/trips/$(tripId)).data.get('memberUids', []))
+          && (!trip().get('crewRemovalTracked', false) || existsAfter(/databases/$(database)/documents/trips/$(tripId)/finance/firstExpense))
           && request.resource.data.payer in request.resource.data.participants
           && request.resource.data.createdAt == request.time;
       }

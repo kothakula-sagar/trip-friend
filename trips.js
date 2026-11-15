@@ -1,6 +1,6 @@
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js';
 import {getAuth,setPersistence,browserLocalPersistence,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,sendEmailVerification,signOut,reload,getIdToken,sendSignInLinkToEmail,isSignInWithEmailLink,signInWithEmailLink,updatePassword,verifyBeforeUpdateEmail,reauthenticateWithCredential,EmailAuthProvider} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
-import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,addDoc,doc,query,where,limit,orderBy,onSnapshot,serverTimestamp,updateDoc,arrayUnion,getDocFromServer,getDoc,setDoc,writeBatch,or,getDocs,deleteDoc} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js';
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,addDoc,doc,query,where,limit,orderBy,onSnapshot,serverTimestamp,updateDoc,arrayUnion,getDocFromServer,getDoc,setDoc,writeBatch,or,getDocs,deleteDoc,runTransaction,arrayRemove} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js';
 import {createTripMap} from './trip-map.js';
 import {createRealTrip} from './real-trip.js';
 import {firebaseConfig} from './firebase-config.js';
@@ -241,7 +241,7 @@ setPersistence(auth,browserLocalPersistence).catch(() => {
 submit('create-trip',async fields => {
   const name = fields.get('name').trim();
   if (!name) return status('Enter a trip name.');
-  const trip = await addDoc(collection(db,'trips'),{name,ownerUid:auth.currentUser.uid,memberEmails:[],memberUids:[auth.currentUser.uid],createdAt:serverTimestamp()});
+  const trip = await addDoc(collection(db,'trips'),{name,ownerUid:auth.currentUser.uid,memberEmails:[],memberUids:[auth.currentUser.uid],crewRemovalTracked:true,createdAt:serverTimestamp()});
   $('create-trip').reset();
   const current = tripRows.find(item => item.id === trip.id);
   try {
@@ -285,6 +285,37 @@ function displayTrip(trip) {
       const value = item.data();
       if (value.acceptedUid) nameLookup.set(value.acceptedUid,value.name);
       const li = row(value.name+' · '+item.id+' · '+(value.acceptedUid ? 'Joined' : 'Pending'));
+      if (value.acceptedUid && (data.memberUids || []).includes(value.acceptedUid) && value.acceptedUid !== data.ownerUid) {
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'outline';
+        remove.textContent = 'Remove member';
+        li.append(remove);
+        remove.onclick = async () => {
+          if (!data.crewRemovalTracked || data.memberEmails.length) {
+            return status('This older trip needs a financial history check before members can be removed.', 'error');
+          }
+          if (!confirm('Remove '+value.name+' from this trip? They will lose access.')) return;
+          remove.disabled = true;
+          try {
+            await runTransaction(db,async transaction => {
+              const expenseMarker = await transaction.get(doc(trip.ref,'finance','firstExpense'));
+              if (expenseMarker.exists()) throw new Error('This trip has posted expenses. Member removal requires a settlement check.');
+              transaction.update(trip.ref,{memberUids:arrayRemove(value.acceptedUid)});
+            });
+            status('Member removed.');
+          } catch (error) {
+            if (error.code) showError(error,'Remove member');
+            else status(error.message,'error');
+          } finally { remove.disabled = false; }
+        };
+        remove.disabled = data.status === 'closed' || data.status === 'closing' || !!data.closed;
+        return li;
+      }
+      if (value.acceptedUid) {
+        li.textContent = value.name+' · '+item.id+' · Removed';
+        return li;
+      }
       if (value.acceptedUid || data.status === 'closed' || data.status === 'closing' || data.closed) return li;
       const actions = document.createElement('div');
       actions.className = 'actions';
@@ -403,7 +434,11 @@ async function claimTrip(user) {
   const ref = doc(trip,'invites',user.email.toLowerCase());
   const invite = await getDocFromServer(ref);
   if (!invite.exists()) throw {code:'auth/invalid-action-code'};
-  if (invite.data().acceptedUid === user.uid) return;
+  if (invite.data().acceptedUid === user.uid) {
+    const current = await getDocFromServer(trip);
+    if (!current.data()?.memberUids?.includes(user.uid)) throw {code:'auth/invalid-action-code'};
+    return;
+  }
   const batch = writeBatch(db);
   batch.update(trip,{memberUids:arrayUnion(user.uid)});
   batch.update(ref,{acceptedUid:user.uid});
@@ -435,7 +470,17 @@ submit('record-expense',async fields => {
   const label = fields.get('label').trim();
   const paise = Math.round(Number(fields.get('amount'))*100);
   if (!label || !Number.isSafeInteger(paise) || paise < 1) return status('Enter an expense and a valid amount.');
-  await addDoc(collection(trip.ref,'expenses'),{label,paise,payer:fields.get('payer'),participants:[...trip.data().memberEmails,...(trip.data().memberUids || [])],createdAt:serverTimestamp()});
+  const bill = doc(collection(trip.ref,'expenses'));
+  const marker = doc(trip.ref,'finance','firstExpense');
+  if (!trip.data().crewRemovalTracked) {
+    const previous = trip.data();
+    await setDoc(bill,{label,paise,payer:fields.get('payer'),participants:[...previous.memberEmails,...(previous.memberUids || [])],createdAt:serverTimestamp()});
+  } else await runTransaction(db,async transaction => {
+    const latest = (await transaction.get(trip.ref)).data();
+    const first = latest.crewRemovalTracked ? await transaction.get(marker) : null;
+    transaction.set(bill,{label,paise,payer:fields.get('payer'),participants:[...latest.memberEmails,...(latest.memberUids || [])],createdAt:serverTimestamp()});
+    if (first && !first.exists()) transaction.set(marker,{expenseId:bill.id});
+  });
   $('record-expense').reset();
   status('Confirmed expense posted.');
 });
