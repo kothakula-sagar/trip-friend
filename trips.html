@@ -12,7 +12,9 @@
 <header id="real-top" class="native-top glass" hidden><button id="real-back" class="outline" type="button" aria-label="Back">←</button><strong id="real-title">Trip Friend</strong><button id="real-alerts" class="outline" type="button" aria-label="Trip chat"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#bell"></use></svg></button><button id="real-sign-out" type="button" class="outline" hidden>Sign out</button></header>
 <main class="wrap trips-main">
 <div class="workspace-hero glass trips-banner"><p class="kicker">YOUR PRIVATE WORKSPACE</p><h1>Private trips</h1><p>Bring your crew and shared expenses together.</p></div>
-<p id="status" class="trip-status" role="status" aria-live="polite">Connecting to Firebase…</p>
+<p id="status" class="trip-status" role="status" aria-live="polite">Checking your saved sign-in…</p>
+<button id="retry-connect" class="outline" type="button" hidden>Retry connection</button>
+<section class="glass card" id="link-join" hidden><h2>Join your trip</h2><p>Sign in and verify the email your organizer invited, then accept the invitation.</p><button id="join-shared-link" type="button" class="blue">Accept invitation</button></section>
 <section class="glass card" id="account" hidden>
 <h2>Join your crew.</h2><p><a href="./app.html#home">Try the demo</a></p><p>Use the email your trip organizer invited.</p>
 <form id="auth-form">
@@ -30,26 +32,26 @@
 <form id="set-password" hidden><label>Create password<input name="password" type="password" required minlength="6" autocomplete="new-password"></label><button class="blue">Save password</button></form></section>
 <details class="glass card" id="settings" hidden><summary>Account settings</summary><form id="change-email"><label>New email<input name="email" type="email" required autocomplete="email"></label><label>Current password<input name="password" type="password" required autocomplete="current-password"></label><button class="outline">Send verification to new email</button></form></details>
 <section id="workspace" class="trip-grid" hidden>
-<article class="glass card" id="real-trip-list"><h2>Your trips</h2><p>Create a trip to start planning with friends.</p>
-<form id="create-trip"><label>Trip name <input name="name" placeholder="e.g. Manali weekend" required maxlength="80"></label><button class="blue">Create trip</button></form>
+<article class="glass card" id="real-trip-list"><h2>Your trips</h2><p>Open an existing trip below or start a new one.</p><button id="new-trip-toggle" type="button" class="gold" aria-expanded="false" aria-controls="create-trip">+ New trip</button>
+<form id="create-trip" hidden><label>Trip name <input name="name" placeholder="e.g. Manali weekend" required maxlength="80"></label><button class="blue">Create trip</button></form>
 <p id="list-status" class="fine" role="status"></p><ul class="data-list" id="trip-list"></ul>
 </article>
 <article class="glass card trip-empty" id="trip-empty" hidden><img src="./crown.svg" alt="" width="48" height="48"><h2>Open a trip</h2><p>Choose a trip to see your crew, shared expenses, and balances.</p></article>
-<article class="glass card" id="detail" hidden><h2 id="trip-name"></h2>
+<article class="glass card" id="detail" hidden><div class="trip-screen-title"><h2 id="trip-name"></h2><span id="trip-role" class="chip"></span></div>
 <nav id="real-tabs" class="native-tabs glass" aria-label="Trip tabs" hidden><a data-real-go="home"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#plan"></use></svg>Home</a><a data-real-go="map"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#pin"></use></svg>Map</a><a data-real-go="bills"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#rupee"></use></svg>Bills</a><a data-real-go="chat"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#bell"></use></svg>Chat <span id="real-chat-unread" class="chat-unread" hidden aria-label="Unread messages"></span></a><a data-real-go="photos"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#image"></use></svg>Photos</a></nav>
 <section data-real-screen="home"><h3>Today</h3><p id="real-next-plan" role="status">No upcoming plan.</p><p><a data-real-go="plans" class="button outline">Plans</a> <a data-real-go="settings" class="button outline">Settings</a> <a data-real-go="packing" class="button outline">Packing</a> <a data-real-go="wrapup" class="button outline">Wrap-up</a></p>
-<h3>Who is where</h3><ul id="real-presence" class="data-list"></ul><h3>Crew</h3><button id="native-share-trip" class="outline" type="button" hidden>Share trip link</button><ul class="data-list" id="crew"></ul>
-<details id="member-panel" hidden><summary>Add member</summary><form id="invite">
+<h3>Who is where</h3><ul id="real-presence" class="data-list"></ul><p><a class="button gold" data-real-go="crew">Crew &amp; invitations</a> <a class="button outline" data-real-go="map">Open trip map</a></p></section><section data-real-screen="crew" hidden><h3>Trip crew</h3><p>See who has joined and manage invitations.</p><button id="native-share-trip" class="outline" type="button" hidden>Share trip link</button><ul class="data-list" id="crew"></ul>
+<details id="member-panel" hidden><summary>Invite member</summary><form id="invite">
 <div class="member-fields"><label>Name<input name="name" required maxlength="80" autocomplete="off"></label>
 <label>Mobile number<input name="mobile" type="tel" required minlength="7" maxlength="22" placeholder="+91 98765 43210"></label></div>
 <label>Email address<input name="email" type="email" required maxlength="254"></label>
-<p class="fine">Trip Friend emails the invitation. Your friend creates a password after opening the link.</p>
-<button class="blue">Send invite</button><p id="invite-status" role="status"></p></form><ul class="data-list" id="invites"></ul></details>
+<p class="fine">Send an invitation email or share a link yourself. Your friend must verify the invited email.</p>
+<div class="actions"><button class="blue" value="email">Send email invite</button><button class="outline" value="share">Create share link</button></div><p id="invite-status" role="status"></p></form><div id="invite-copy-area" hidden><label>Invitation link<input id="invite-copy-url" readonly></label><button id="copy-invite" type="button" class="outline">Copy invite link</button></div></details><div id="crew-invites" hidden><h4>Invitations and access</h4><ul class="data-list" id="invites"></ul></div>
 </section><p id="real-location-banner" role="status"></p><button id="real-stop-location" type="button" class="outline" hidden>Stop sharing</button><section data-real-screen="map"><button id="real-share-location" class="outline" type="button" aria-pressed="false">Share my location with this trip</button><details id="trip-map-panel" class="map-panel">
-<summary>Trip map &amp; meeting point</summary>
+<summary>Live crew map &amp; meeting point</summary>
 <div id="trip-map" aria-label="OpenStreetMap trip map"></div>
-<p id="saved-pin"></p><p id="map-status" role="status"></p>
-<div class="actions"><button type="button" class="outline" id="locate-map">Use my location</button><a id="map-directions" hidden target="_blank" rel="noopener">Open pin in OpenStreetMap</a></div>
+<p id="saved-pin"></p><ul class="data-list" id="map-crew-list" aria-label="People currently sharing"></ul><p id="map-status" role="status"></p>
+<div class="actions"><button type="button" class="outline" id="locate-map">Find me on the map</button><a id="map-directions" hidden target="_blank" rel="noopener">Get directions to meeting point</a></div>
 <form id="pin-form" hidden><p class="fine">Click the map or enter coordinates to share a meeting point.</p>
 <label>Meeting point name<input name="name" maxlength="80" placeholder="Old Manali bridge" required></label>
 <div class="member-fields"><label>Latitude<input name="lat" type="number" step="any" min="-90" max="90" required></label>
@@ -89,4 +91,13 @@
 <button id="real-add" class="native-fab gold" type="button" hidden aria-label="Add to trip">+</button>
 <dialog id="real-sheet" class="modal glass native-sheet"><h2>Add to trip</h2><div class="native-actions"><a class="button gold" data-real-go="bills">Add expense</a><a class="button outline" data-real-go="plans">Add plan</a><a class="button outline" data-real-go="chat">Message crew</a></div><form method="dialog"><button class="outline">Close</button></form></dialog>
 <dialog id="real-exit" class="modal glass"><h2>Exit Trip Friend?</h2><button id="real-exit-confirm" class="outline">Exit</button><form method="dialog"><button class="outline">Stay</button></form></dialog>
+<script>
+window.tripConnectionTimer = setTimeout(() => {
+  const status = document.getElementById('status');
+  status.textContent = 'Sign-in is taking longer than usual. Check your internet connection, then retry.';
+  status.dataset.tone = 'error';
+  document.getElementById('retry-connect').hidden = false;
+},12000);
+document.getElementById('retry-connect').onclick = () => location.reload();
+</script>
 </body></html>

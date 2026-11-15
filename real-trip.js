@@ -78,6 +78,7 @@ export function createRealTrip({subscribe,write,patch,erase,identity,openTrip,sh
     if (screen === 'chat' && unread) { unread = 0; refreshChat(); }
     $('real-title').textContent = id ? trip.name : 'Trip Friend';
     $('real-tabs').hidden = !id;
+    if (screen === 'map') document.dispatchEvent(new Event('trip-map-open'));
     $('real-add').hidden = !native || !id;
     $('real-alerts').hidden = !id;
     $('real-back').hidden = !id;

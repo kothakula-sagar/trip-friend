@@ -122,3 +122,9 @@ Trip Settings has notification permission, location sharing controls, and an And
 ### Remove a joined member
 
 Under Home → Crew → Add member, a trip admin can use **Remove member** for a joined invitation. New UID-only trips track the first posted expense atomically. Removal is allowed before that expense, and only while the trip is active. Expense-bearing and older trips require a settlement or history check before removal is supported. Accepted invitations remain as records and cannot be reused after removal. Publish the new rules before testing. On two phones, accept an invite in a newly created trip, remove the member as admin, and confirm access is revoked after sync. Repeat with an expense and confirm removal is blocked.
+
+### Home crew and map usability
+
+Open **Your trips → New trip**, then **Home → Crew & invitations**. The organizer can request a Firebase email or generate a website link for direct sharing. The link still requires the invited Firebase email to be verified. Firebase controls its own email template and delivery. In the Firebase Console email-link template, add the public website address if that template permits customization. Test with two accounts and try the copy-link flow even when email delivery works.
+
+Open **Map** to see labeled crew markers and a list of recent sharers. Find me centers the map without publishing a location. A separate Share button starts live sharing. The saved meeting point links to external directions. Test launch, browser reload, role labels and pin navigation. This patch has no new Firestore rules, indexes, secrets or paid services.

@@ -38,6 +38,7 @@ const real = createRealTrip({
 });
 const meetingPoint = id => doc(db,'trips',id,'map','meeting');
 const showTripMap = createTripMap({
+  viewer: () => auth.currentUser?.uid,
   listen: (id,change,error) => onSnapshot(meetingPoint(id),snapshot => change(snapshot.data()),error),
   save: (id,point) => setDoc(meetingPoint(id),{...point,updatedAt:serverTimestamp()}),
   remove: id => deleteDoc(meetingPoint(id))
@@ -68,6 +69,8 @@ function tripFromLink(url, depth = 0) {
 }
 const inviteTrip = tripFromLink(inviteUrl);
 const validInviteTrip = inviteTrip && /^[A-Za-z0-9]{20}$/.test(inviteTrip);
+const sharedLink = Boolean(validInviteTrip && inviteUrl.searchParams.get('join') === '1');
+let resumeTrip;
 const emailLink = validInviteTrip && isSignInWithEmailLink(auth,location.href);
 let linkInProgress = Boolean(emailLink);
 let nameLookup = new Map();
@@ -158,6 +161,9 @@ $('check-email').onclick = async () => {
   } catch (error) { showError(error); }
 };
 function showSession(user) {
+  clearTimeout(window.tripConnectionTimer);
+  $('retry-connect').hidden = true;
+  $('link-join').hidden = !sharedLink || !user?.emailVerified || !!resumeTrip;
   stopTrips?.();
   stopExpenses?.();
   real.select(null);
@@ -175,7 +181,8 @@ function showSession(user) {
   $('verification').hidden = !user || user.emailVerified;
   $('workspace').hidden = !user?.emailVerified;
   $('sign-out').hidden = !user;
-  status(user?.emailVerified ? 'Signed in as '+user.email : user ? 'Email verification required.' : 'Sign in or create an account.');
+  status(user?.emailVerified ? 'Signed in as '+user.email : user ? 'Email verification required.' :
+    sharedLink ? 'Sign in with the email your organizer invited.' : 'Sign in or create an account.');
   if (!user?.emailVerified || linkInProgress) { $('workspace').hidden = true; return; }
   stopTrips = onSnapshot(query(collection(db,'trips'),or(where('memberEmails','array-contains',email()),where('memberUids','array-contains',user.uid)),limit(50)), snapshot => {
     window.TripShell.state($('list-status'), 'ready');
@@ -218,8 +225,8 @@ function showSession(user) {
       return li;
     }));
     if (!tripRows.length) $('trip-list').append(row('No private trips yet.'));
-    const current = tripRows.find(trip => trip.id === (window.TripShell.route().id || selected || requestedTrip));
-    if (current) { if (window.TripShell.native && !window.TripShell.route().id) real.go(current.id); else displayTrip(current); }
+    const current = tripRows.find(trip => trip.id === (window.TripShell.route().id || selected || resumeTrip || requestedTrip));
+    if (current) { if (!window.TripShell.route().id) real.go(current.id); else displayTrip(current); }
     else if (selected) {
       stopExpenses?.();
       selected = null;
@@ -235,6 +242,12 @@ function showSession(user) {
       : 'Could not load trips. Reload the page to retry.';
   });
 }
+$('new-trip-toggle').onclick = () => {
+  const form = $('create-trip');
+  form.hidden = !form.hidden;
+  $('new-trip-toggle').setAttribute('aria-expanded',String(!form.hidden));
+  if (!form.hidden) form.elements.name.focus();
+};
 setPersistence(auth,browserLocalPersistence).catch(() => {
   status('Persistent sign-in storage is unavailable on this device.');
 }).finally(() => onAuthStateChanged(auth,showSession,showError));
@@ -243,10 +256,12 @@ submit('create-trip',async fields => {
   if (!name) return status('Enter a trip name.');
   const trip = await addDoc(collection(db,'trips'),{name,ownerUid:auth.currentUser.uid,memberEmails:[],memberUids:[auth.currentUser.uid],crewRemovalTracked:true,createdAt:serverTimestamp()});
   $('create-trip').reset();
+  $('create-trip').hidden = true;
+  $('new-trip-toggle').setAttribute('aria-expanded','false');
   const current = tripRows.find(item => item.id === trip.id);
   try {
     const created = current || await getDocFromServer(trip);
-    if (window.TripShell.native) real.go(created.id);
+    real.go(created.id);
     displayTrip(created);
     status('Trip created.', 'success');
   } catch (error) {
@@ -275,15 +290,22 @@ function displayTrip(trip) {
     if (button.dataset.tripId === trip.id) button.setAttribute('aria-current','true');
     else button.removeAttribute('aria-current');
   }
+  if ($('invite-copy-url').value && new URL($('invite-copy-url').value).searchParams.get('trip') !== trip.id) {
+    $('invite-copy-area').hidden = true;
+    $('invite-copy-url').value = '';
+    $('invite-status').textContent = '';
+  }
   $('trip-name').textContent = data.name;
+  $('trip-role').textContent = admin ? 'You’re the trip admin' : 'You’re a trip member';
   $('member-panel').hidden = !admin;
+  $('crew-invites').hidden = !admin;
   $('invites').replaceChildren();
   nameLookup = new Map([[auth.currentUser.uid, 'You']]);
   if (admin) getDocs(query(collection(trip.ref,'invites'),limit(50))).then(snapshot => {
     if (selected !== trip.id || auth.currentUser?.uid !== data.ownerUid) return;
     $('invites').replaceChildren(...snapshot.docs.map(item => {
       const value = item.data();
-      if (value.acceptedUid) nameLookup.set(value.acceptedUid,value.name);
+      if (value.acceptedUid && value.acceptedUid !== auth.currentUser.uid) nameLookup.set(value.acceptedUid,value.name);
       const li = row(value.name+' · '+item.id+' · '+(value.acceptedUid ? 'Joined' : 'Pending'));
       if (value.acceptedUid && (data.memberUids || []).includes(value.acceptedUid) && value.acceptedUid !== data.ownerUid) {
         const remove = document.createElement('button');
@@ -353,7 +375,7 @@ function displayTrip(trip) {
   }).catch(() => {});
   function renderCrew() {
     const name = id => nameLookup.get(id) || (id.includes('@') ? id : 'Trip member');
-    $('crew').replaceChildren(...participants.map(id => row(name(id))));
+    $('crew').replaceChildren(...participants.map(id => row(name(id)+' · '+(id === data.ownerUid || (admin && id === email() && !(data.memberUids || []).includes(data.ownerUid)) ? 'Admin' : 'Member'))));
     const select = $('record-expense').elements.payer;
     const prior = select.value;
     select.replaceChildren(...participants.map(id => new Option(name(id),id)));
@@ -391,7 +413,7 @@ function displayTrip(trip) {
     $('shared-balances').replaceChildren(...[...balances].map(([member,value]) => row((nameLookup.get(member) || (member.includes('@') ? member : 'Trip member'))+' · '+(value === 0 ? 'Settled' : value > 0 ? 'Gets back '+money(value) : 'Owes '+money(-value)))));
   }, () => { $('expense-status').textContent = 'Could not load shared expenses.'; });
 }
-submit('invite',async fields => {
+submit('invite',async (fields,action) => {
   const tripId = selected;
   if (!tripId) return;
   const address = fields.get('email').trim().toLowerCase();
@@ -410,16 +432,46 @@ submit('invite',async fields => {
   if (!existing.exists()) await setDoc(ref,{name,mobile,acceptedUid:''});
   const url = new URL('https://kothakula-sagar.github.io/trip-friend/trips.html');
   url.searchParams.set('trip',tripId);
-  try {
-    await sendSignInLinkToEmail(auth,address,{url:url.href,handleCodeInApp:true});
-  } catch (error) {
-    $('invite-status').textContent = 'Invitation saved. Email delivery failed. Submit again to retry.';
-    throw error;
+  const fallback = new URL(url);
+  fallback.searchParams.set('join','1');
+  if (selected !== tripId) return;
+  $('invite-copy-area').hidden = false;
+  $('invite-copy-url').value = fallback.href;
+  $('invite-status').textContent = 'Invitation is ready. Share the link with '+address+'.';
+  if (action !== 'share') {
+    try {
+      await sendSignInLinkToEmail(auth,address,{url:url.href,handleCodeInApp:true});
+      if (selected === tripId) $('invite-status').textContent = 'Firebase accepted the email request. If your friend can’t find it, share the link below.';
+    } catch (error) {
+      if (selected === tripId) $('invite-status').textContent = ['auth/too-many-requests','auth/quota-exceeded'].includes(error.code)
+        ? 'The Firebase email limit was reached. Share the invite link below.'
+        : 'The email could not be sent. Share the invite link below.';
+    }
   }
+  if (selected !== tripId) return;
   $('invite').reset();
-  if (trip && selected === tripId) displayTrip(trip);
-  $('invite-status').textContent = 'Invitation email requested for '+address+'.';
+  if (trip) displayTrip(trip);
+
 });
+$('copy-invite').onclick = async () => {
+  const field = $('invite-copy-url');
+  try {
+    await navigator.clipboard.writeText(field.value);
+    $('invite-status').textContent = 'Invite link copied.';
+  } catch { field.focus(); field.select(); $('invite-status').textContent = 'Copy the selected link and share it with your friend.'; }
+};
+$('join-shared-link').onclick = async () => {
+  const button = $('join-shared-link');
+  button.disabled = true;
+  try {
+    await claimTrip(auth.currentUser);
+    resumeTrip = inviteTrip;
+    history.replaceState(null,'',location.pathname);
+    showSession(auth.currentUser);
+    status('Invitation accepted.', 'success');
+  } catch (error) { showError(error,'Accept invitation'); }
+  finally { button.disabled = false; }
+};
 $('join').hidden = !emailLink;
 submit('accept-invite',async fields => {
   const address = fields.get('email').trim();
@@ -447,6 +499,7 @@ async function claimTrip(user) {
 submit('set-password',async fields => {
   await updatePassword(auth.currentUser,fields.get('password'));
   await claimTrip(auth.currentUser);
+  resumeTrip = inviteTrip;
   history.replaceState(null,'',location.pathname);
   linkInProgress = false;
   $('join').hidden = true;

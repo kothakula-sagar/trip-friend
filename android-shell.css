@@ -26,3 +26,4 @@
 @media(prefers-reduced-motion:reduce){[data-trip-state=loading]{animation:none}}
 
 html:not(.native-runtime) #real-tabs:not([hidden]){display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:14px 0;padding:5px;border-radius:16px;background:#ffffff99}html:not(.native-runtime) #real-tabs a{min-width:0;padding:4px;overflow-wrap:anywhere;text-align:center}
+.trip-screen-title{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}.trip-screen-title .chip{white-space:normal}.crew-map-marker span{display:grid;place-items:center;border-radius:50%;width:32px;height:32px;border:2px solid white;color:#fff;box-shadow:0 2px 6px #1b1b2f50;font:700 14px Inter,sans-serif}.crew-map-friend{background:#087652}.crew-map-you{background:#1f3a93}#crew-invites{margin-top:14px}#new-trip-toggle{margin:10px 0}#invite-status:empty{display:none}
