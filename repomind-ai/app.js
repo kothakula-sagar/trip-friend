@@ -20,16 +20,16 @@ async function publicRepo(url){
   const parsed=new URL(url);
   if(parsed.hostname!=='github.com')throw Error('Use a github.com repository URL');
   const parts=parsed.pathname.split('/').filter(Boolean);
-  if(parts.length!==2||!parts.every(p=>/^[\\w.-]+$/.test(p)))throw Error('Use https://github.com/owner/repo');
+  if(parts.length!==2||!parts.every(p=>/^[\w.-]+$/.test(p)))throw Error('Use https://github.com/owner/repo');
   const full=parts.join('/');
   const get=async path=>{const r=await fetch('https://api.github.com'+path,{headers:{Accept:'application/vnd.github+json'}});if(!r.ok)throw Error('GitHub API returned '+r.status+'. Try the Worker backend if you reach its public rate limit.');return r.json()};
   const r=await get('/repos/'+full);
   const tree=await get('/repos/'+full+'/git/trees/'+encodeURIComponent(r.default_branch)+'?recursive=1');
   if(tree.truncated)throw Error('Large repository tree was truncated by GitHub; use the Worker for this repository.');
-  const excluded=/(^|\\/)(node_modules|dist|build|vendor|\\.git)\\/|\\.(?:lock|png|jpg|webp|svg|woff2|pdf|zip|apk)$/i;
-  const secret=/(^|\\/)(\\.env(?:\\..*)?|.*(?:secret|credentials|private[_-]?key))$/i;
-  const files=tree.tree.filter(f=>f.type==='blob'&&f.size<=100000&&!excluded.test(f.path)&&!secret.test(f.path)&&/\\.(?:js|ts|jsx|tsx|py|md|html|css|json|yaml|yml|go|rs|java|kt|php|sh|toml|vue|svelte|sql)$/i.test(f.path)).slice(0,400).map(f=>({path:f.path,size:f.size,content:''}));
-  const prioritized=[...files].sort((a,b)=>(/^(readme|package\\.json|src\\/main|src\\/index|index\\.html|app\\.)/i.test(b.path)?1:0)-(/^(readme|package\\.json|src\\/main|src\\/index|index\\.html|app\\.)/i.test(a.path)?1:0)||a.path.length-b.path.length).slice(0,20);
+  const excluded=/(^|\/)(node_modules|dist|build|vendor|\.git)\/|\.(?:lock|png|jpg|webp|svg|woff2|pdf|zip|apk)$/i;
+  const secret=/(^|\/)(\.env(?:\..*)?|.*(?:secret|credentials|private[_-]?key))$/i;
+  const files=tree.tree.filter(f=>f.type==='blob'&&f.size<=100000&&!excluded.test(f.path)&&!secret.test(f.path)&&/\.(?:js|ts|jsx|tsx|py|md|html|css|json|yaml|yml|go|rs|java|kt|php|sh|toml|vue|svelte|sql)$/i.test(f.path)).slice(0,400).map(f=>({path:f.path,size:f.size,content:''}));
+  const prioritized=[...files].sort((a,b)=>(/^(readme|package\.json|src\/main|src\/index|index\.html|app\.)/i.test(b.path)?1:0)-(/^(readme|package\.json|src\/main|src\/index|index\.html|app\.)/i.test(a.path)?1:0)||a.path.length-b.path.length).slice(0,20);
   let remaining=60000;
   for(const group of Array.from({length:Math.ceil(prioritized.length/4)},(_,i)=>prioritized.slice(i*4,i*4+4))){
     await Promise.all(group.map(async f=>{try{
