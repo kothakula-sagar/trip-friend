@@ -1,0 +1,14 @@
+name = "repomind-ai-api"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+# Set your public frontend origin, e.g.:
+# [vars]
+# ALLOWED_ORIGIN = "https://your-username.github.io"
+# For local development: use http://localhost:8000
+#
+# Secrets (never put values here):
+# npx wrangler secret put GITHUB_TOKEN
+# npx wrangler secret put OPENAI_API_KEY
+# npx wrangler secret put GROQ_API_KEY
+# npx wrangler secret put APP_ACCESS_TOKEN
