@@ -1,8 +1,7 @@
+.env
+.env.*
+.dev.vars
 node_modules/
-www/
-android/
-google-services.json
-*.jks
-*.keystore
-
-firestore-debug.log
+dist/
+.DS_Store
+*.log
