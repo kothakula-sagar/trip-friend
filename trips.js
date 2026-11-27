@@ -164,7 +164,7 @@ function showSession(user) {
   }
   clearTimeout(window.tripConnectionTimer);
   $('retry-connect').hidden = true;
-  $('link-join').hidden = !sharedLink || !user?.emailVerified || !!resumeTrip;
+  $('link-join').hidden = !sharedLink || !user?.emailVerified || !!resumeTrip || linkInProgress;
   stopTrips?.();
   stopExpenses?.();
   real.select(null);

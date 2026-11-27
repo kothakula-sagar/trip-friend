@@ -11,6 +11,9 @@ on:
     paths:
       - 'capacitor.config.json'
       - 'android-shell.*'
+      - 'trips.*'
+      - 'real-trip.js'
+      - 'invite-flow.mjs'
       - 'scripts/prepare-android.mjs'
       - 'release.json'
       - '.github/workflows/android.yml'

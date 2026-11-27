@@ -56,6 +56,7 @@ const server = http.createServer((req,res) => {
   await page.reload();
   await page.locator('#set-password').waitFor({state:'visible'});
   assert.equal(await page.locator('#accept-invite').isHidden(),true);
+  assert.equal(await page.locator('#link-join').isHidden(),true);
   console.log('PASS consumed email link resumes password creation after reload');
   await page.locator('#set-password input').fill('ExamplePassword123');
   await page.locator('#set-password button').click();
