@@ -3,6 +3,7 @@ import {getAuth,setPersistence,browserLocalPersistence,onAuthStateChanged,signIn
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,addDoc,doc,query,where,limit,orderBy,onSnapshot,serverTimestamp,updateDoc,arrayUnion,getDocFromServer,getDoc,setDoc,writeBatch,or,getDocs,deleteDoc,runTransaction,arrayRemove} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js';
 import {createTripMap} from './trip-map.js';
 import {createRealTrip} from './real-trip.js';
+import {readInviteTrip,inviteError,validCheckpoint} from './invite-flow.mjs';
 import {firebaseConfig} from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
@@ -55,26 +56,14 @@ const format = new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'});
 const money = paise => format.format(paise/100);
 let stopTrips, stopExpenses, selected, tripRows = [];
 const inviteUrl = new URL(location.href);
-function tripFromLink(url, depth = 0) {
-  if (depth > 3) return null;
-  const trip = url.searchParams.get('trip');
-  if (trip) return trip;
-  for (const key of ['continueUrl','link']) {
-    const value = url.searchParams.get(key);
-    if (!value) continue;
-    try {
-      const nested = tripFromLink(new URL(value),depth+1);
-      if (nested) return nested;
-    } catch {}
-  }
-  return null;
-}
-const inviteTrip = tripFromLink(inviteUrl);
+const inviteTrip = readInviteTrip(location.href);
 const validInviteTrip = inviteTrip && /^[A-Za-z0-9]{20}$/.test(inviteTrip);
-const sharedLink = Boolean(validInviteTrip && inviteUrl.searchParams.get('join') === '1');
+const sharedLink = Boolean(validInviteTrip && (inviteUrl.searchParams.get('join') === '1' || inviteUrl.searchParams.get('finish') === '1'));
 let resumeTrip;
 const emailLink = validInviteTrip && isSignInWithEmailLink(auth,location.href);
-let linkInProgress = Boolean(emailLink);
+let linkInProgress = Boolean(emailLink || (validInviteTrip && inviteUrl.searchParams.get('finish') === '1'));
+let inviteCheckpoint;
+try { inviteCheckpoint = JSON.parse(sessionStorage.getItem('tf-invite-checkpoint')); } catch {}
 let nameLookup = new Map();
 
 function showError(error, action) {
@@ -90,7 +79,7 @@ function showError(error, action) {
     'not-found':'The project database is unavailable.',
     'failed-precondition':'The project database is unavailable or requires additional configuration.'
   };
-  const message = messages[error.code] || 'Try again or check your connection.';
+  const message = ((linkInProgress || action?.includes('invitation')) && inviteError(error.code)) || messages[error.code] || inviteError(error.code) || 'Could not complete this action. Retry, or contact the organizer. Error: '+String(error.code || 'unknown').replace(/[^a-zA-Z0-9_/-]/g,'').slice(0,80);
   status(action ? action + ': ' + message : message, 'error');
 }
 function submit(id, action) {
@@ -163,6 +152,16 @@ $('check-email').onclick = async () => {
   } catch (error) { showError(error); }
 };
 function showSession(user) {
+  if (validInviteTrip && user?.emailVerified && validCheckpoint(inviteCheckpoint,inviteTrip,user.uid)) {
+    linkInProgress = true;
+    $('join').hidden = false;
+    $('accept-invite').hidden = true;
+    $('set-password').hidden = false;
+    $('invite-help').textContent = 'Email confirmed. Finish creating your password to join. If saving fails, you can retry here.';
+  } else if (linkInProgress && !emailLink) {
+    linkInProgress = false;
+    $('join').hidden = true;
+  }
   clearTimeout(window.tripConnectionTimer);
   $('retry-connect').hidden = true;
   $('link-join').hidden = !sharedLink || !user?.emailVerified || !!resumeTrip;
@@ -497,9 +496,37 @@ $('join-shared-link').onclick = async () => {
   finally { button.disabled = false; }
 };
 $('join').hidden = !emailLink;
+if (validInviteTrip) $('invite-password-link').href = inviteLink(inviteTrip).href;
+let resendUntil = 0;
+$('resend-invite-email').onclick = async () => {
+  const form = $('accept-invite');
+  if (!form.elements.email.reportValidity() || Date.now() < resendUntil || !validInviteTrip) return;
+  const button = $('resend-invite-email');
+  button.disabled = true;
+  try {
+    const url = new URL(location.pathname,location.origin);
+    url.searchParams.set('trip',inviteTrip);
+    await sendSignInLinkToEmail(auth,form.elements.email.value.trim(),{url:url.href,handleCodeInApp:true});
+    resendUntil = Date.now()+60000;
+    status('Firebase accepted the email request. Open the newest message in that mailbox. Trip access still requires an invitation from your organizer.','success');
+  } catch (error) { showError(error,'Send fresh invitation link'); }
+  finally {
+    if (Date.now() < resendUntil) {
+      button.textContent = 'Wait 60 seconds before resending';
+      setTimeout(() => { button.disabled = false; button.textContent = 'Send a fresh sign-in email'; },60000);
+    } else button.disabled = false;
+  }
+};
 submit('accept-invite',async fields => {
   const address = fields.get('email').trim();
-  await signInWithEmailLink(auth,address,location.href);
+  const credential = await signInWithEmailLink(auth,address,location.href);
+  // Remember progress only after Firebase confirms the mailbox. Never store the action code.
+  inviteCheckpoint = {tripId:inviteTrip,uid:credential.user.uid,at:Date.now()};
+  try { sessionStorage.setItem('tf-invite-checkpoint',JSON.stringify(inviteCheckpoint)); } catch {}
+  const finish = new URL(location.pathname,location.origin);
+  finish.searchParams.set('trip',inviteTrip);
+  finish.searchParams.set('finish','1');
+  history.replaceState(null,'',finish.href);
   $('accept-invite').hidden = true;
   $('set-password').hidden = false;
   status('Email verified. Create your password to finish.');
@@ -509,7 +536,8 @@ async function claimTrip(user) {
   const trip = doc(db,'trips',inviteTrip);
   const ref = doc(trip,'invites',user.email.toLowerCase());
   const invite = await getDocFromServer(ref);
-  if (!invite.exists()) throw {code:'auth/invalid-action-code'};
+  if (!invite.exists()) throw {code:'invite/not-found'};
+  if (invite.data().acceptedUid && invite.data().acceptedUid !== user.uid) throw {code:'invite/already-claimed'};
   if (invite.data().acceptedUid === user.uid) {
     const current = await getDocFromServer(trip);
     if (!current.data()?.memberUids?.includes(user.uid)) throw {code:'auth/invalid-action-code'};
@@ -526,6 +554,8 @@ submit('set-password',async fields => {
   resumeTrip = inviteTrip;
   history.replaceState(null,'',location.pathname);
   linkInProgress = false;
+  inviteCheckpoint = null;
+  try { sessionStorage.removeItem('tf-invite-checkpoint'); } catch {}
   $('join').hidden = true;
   $('set-password').reset();
   showSession(auth.currentUser);

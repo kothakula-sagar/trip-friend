@@ -1,10 +1,10 @@
 {
   "name": "trip-friend",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "private": true,
   "scripts": {
     "android:prepare": "node scripts/prepare-android.mjs",
-    "test": "node --test tests/foundations.test.mjs",
+    "test": "node --test tests/foundations.test.mjs tests/invite-link.test.mjs",
     "test:rules": "firebase emulators:exec --only firestore --project demo-tripfriend \"node --test tests/firestore.test.mjs\""
   },
   "dependencies": {

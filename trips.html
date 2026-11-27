@@ -27,8 +27,8 @@
 <h2>Verify your email.</h2><p>Open the verification email, then return here and select Check verification.</p>
 <div class="actions"><button class="blue" id="check-email">Check verification</button><button class="outline" id="send-email">Send verification email</button></div>
 </section>
-<section class="glass card" id="join" hidden><h2>Accept your trip invitation</h2>
-<form id="accept-invite"><label>Invited email<input name="email" type="email" required autocomplete="email"></label><button class="blue">Accept invitation</button></form>
+<section class="glass card" id="join" hidden><h2>Accept your trip invitation</h2><p id="invite-help">Enter the exact email address shown inside the invitation email. A link sent to one address cannot sign in another address.</p>
+<form id="accept-invite"><label>Invited email<input name="email" type="email" required autocomplete="email" autocapitalize="none" spellcheck="false"></label><button class="blue">Accept invitation</button></form><div class="actions"><button id="resend-invite-email" type="button" class="outline">Send a fresh sign-in email</button><a id="invite-password-link" class="button outline" href="./trips.html">Use password sign-in instead</a></div><p class="fine">Use the newest link. If it opens inside your email app and sign-in fails, choose Open in browser from its menu.</p>
 <form id="set-password" hidden><label>Create password<input name="password" type="password" required minlength="6" autocomplete="new-password"></label><button class="blue">Save password</button></form></section>
 <details class="glass card" id="settings" hidden><summary>Account settings</summary><form id="change-email"><label>New email<input name="email" type="email" required autocomplete="email"></label><label>Current password<input name="password" type="password" required autocomplete="current-password"></label><button class="outline">Send verification to new email</button></form></details>
 <section id="workspace" class="trip-grid" hidden>

@@ -89,3 +89,26 @@ test('Polls are admin-created; members vote only as themselves within the option
   await assertFails(setDoc(doc(admin,'trips/closed/polls/blocked'),poll));
   await assertFails(setDoc(doc(admin,'trips/open/polls/invalid'),{...poll,options:['a','a']}));
 });
+
+test('Invite claim is atomic, mailbox-bound, UID-bound and idempotent access cannot be stolen',async () => {
+  await env.withSecurityRulesDisabled(async context => {
+    const db = context.firestore();
+    await setDoc(doc(db,'trips/invitation'),{name:'Private trip',ownerUid:'admin',memberEmails:[],memberUids:['admin']});
+    await setDoc(doc(db,'trips/invitation/invites/newmember@example.test'),{name:'New member',mobile:'+919876543210',acceptedUid:''});
+  });
+  const claim = (client,uid) => {
+    const batch = writeBatch(client);
+    batch.update(doc(client,'trips/invitation'),{memberUids:['admin',uid]});
+    batch.update(doc(client,'trips/invitation/invites/newmember@example.test'),{acceptedUid:uid});
+    return batch.commit();
+  };
+  await assertFails(getDoc(doc(account('outside'),'trips/invitation')));
+  await assertFails(getDoc(doc(account('outside'),'trips/invitation/invites/newmember@example.test')));
+  await assertFails(claim(account('outside'),'outside'));
+  await assertFails(claim(account('newmember',false),'newmember'));
+  await assertFails(updateDoc(doc(account('newmember'),'trips/invitation/invites/newmember@example.test'),{acceptedUid:'newmember'}));
+  await assertFails(claim(account('newmember'),'outside'));
+  await assertSucceeds(claim(account('newmember'),'newmember'));
+  await assertSucceeds(getDoc(doc(account('newmember'),'trips/invitation')));
+  await assertFails(claim(account('outside'),'outside'));
+});
