@@ -18,6 +18,7 @@ const real = createRealTrip({
   write: (id,path,data,key) => key
     ? setDoc(doc(db,'trips',id,path,key),{...data,updatedAt:serverTimestamp()})
     : addDoc(collection(db,'trips',id,path),{...data,createdAt:serverTimestamp()}),
+  vote: (id,pollId,option) => setDoc(doc(db,'trips',id,'polls',pollId,'votes',auth.currentUser.uid),{option,updatedAt:serverTimestamp()}),
   patch: (id,path,key,fields) => updateDoc(doc(db,'trips',id,path,key),fields),
   erase: (id,path,key) => deleteDoc(doc(db,'trips',id,path,key)),
   identity: () => auth.currentUser,
@@ -301,7 +302,7 @@ function displayTrip(trip) {
   $('member-panel').hidden = !admin;
   $('crew-invite-action').hidden = !admin;
   $('crew-invite-action').onclick = () => {
-    $('member-panel').open = true;
+    real.go(trip.id,'invite');
     $('invite').elements.name.focus();
     $('member-panel').scrollIntoView({block:'start'});
   };
@@ -352,7 +353,7 @@ function displayTrip(trip) {
       for (const [label,run] of [
         ['Copy invite link',async () => {
           const url = inviteLink(trip.id);
-          $('member-panel').open = true;
+          real.go(trip.id,'invite');
           $('invite-copy-area').hidden = false;
           $('invite-copy-url').value = url.href;
           await copyInviteLink();

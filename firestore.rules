@@ -113,6 +113,30 @@ service cloud.firestore {
           && request.resource.data.checked is bool
           && request.resource.data.checkedBy == (request.resource.data.checked ? uid() : '');
       }
+      match /polls/{pollId} {
+        allow get: if crew();
+        allow list: if crew() && request.query.limit <= 100;
+        allow create: if admin(parentTrip()) && activeTrip()
+          && request.resource.data.keys().hasOnly(['question','options','authorUid','createdAt'])
+          && request.resource.data.question is string && request.resource.data.question.size() > 0 && request.resource.data.question.size() <= 120
+          && request.resource.data.options is list && request.resource.data.options.size() >= 2 && request.resource.data.options.size() <= 5
+          && request.resource.data.options.toSet().size() == request.resource.data.options.size()
+          && validOption(request.resource.data.options[0]) && validOption(request.resource.data.options[1])
+          && (request.resource.data.options.size() < 3 || validOption(request.resource.data.options[2]))
+          && (request.resource.data.options.size() < 4 || validOption(request.resource.data.options[3]))
+          && (request.resource.data.options.size() < 5 || validOption(request.resource.data.options[4]))
+          && request.resource.data.authorUid == uid() && request.resource.data.createdAt == request.time;
+        match /votes/{voter} {
+          allow get: if crew();
+          allow list: if crew() && request.query.limit <= 100;
+          allow create, update: if crew() && activeTrip() && voter == uid()
+            && request.resource.data.keys().hasOnly(['option','updatedAt'])
+            && request.resource.data.option is int && request.resource.data.option >= 0
+            && request.resource.data.option < get(/databases/$(database)/documents/trips/$(tripId)/polls/$(pollId)).data.options.size()
+            && request.resource.data.updatedAt == request.time;
+        }
+      }
+      function validOption(value) { return value is string && value.size() > 0 && value.size() <= 80; }
       match /plans/{planId} {
         allow get: if crew();
         allow list: if crew() && request.query.limit <= 100;

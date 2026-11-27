@@ -41,18 +41,13 @@
 <nav id="real-tabs" class="native-tabs glass" aria-label="Trip tabs" hidden><a data-real-go="home"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#plan"></use></svg>Home</a><a data-real-go="map"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#pin"></use></svg>Map</a><a data-real-go="bills"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#rupee"></use></svg>Bills</a><a data-real-go="chat"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#bell"></use></svg>Chat <span id="real-chat-unread" class="chat-unread" hidden aria-label="Unread messages"></span></a><a data-real-go="photos"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#image"></use></svg>Photos</a></nav>
 <section data-real-screen="home">
 <div class="trip-home-today"><p class="kicker">UP NEXT</p><h3>Today</h3><p id="real-next-plan" role="status">No upcoming plan.</p><a data-real-go="plans" class="button outline">Open plans</a></div>
-<div class="trip-home-actions">
+<div class="trip-home-actions"><a class="trip-action" data-real-go="addexpense"><strong>Add expense</strong><small>Record a bill paid for the crew</small></a><a class="trip-action" data-real-go="plans"><strong>Trip planner</strong><small>See the next stop and add a plan</small></a><a class="trip-action" data-real-go="chat"><strong>Group chat</strong><small>Keep everyone in the loop</small></a><a class="trip-action" data-real-go="polls"><strong>Polls</strong><small>Choose together</small></a>
 <a class="trip-action" data-real-go="crew"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#users"></use></svg><strong>Crew &amp; invitations</strong><small>See who joined and manage access</small></a>
 <a class="trip-action" data-real-go="map"><svg class="line-icon" aria-hidden="true"><use href="./icons.svg#pin"></use></svg><strong>Open trip map</strong><small>Find your crew and meeting point</small></a>
 </div>
 <h3>Who is where</h3><ul id="real-presence" class="data-list"></ul>
 <nav aria-label="More trip tools" class="actions"><a data-real-go="packing" class="button outline">Packing</a><a data-real-go="wrapup" class="button outline">Wrap-up</a><a data-real-go="settings" class="button outline">Settings</a></nav></section><section data-real-screen="crew" hidden><div class="trip-screen-title"><h3>Trip crew</h3><button id="crew-invite-action" type="button" class="gold" hidden>Invite someone</button></div><p>See who has joined and manage invitations.</p><p id="crew-feedback" class="fine" role="status"></p><button id="native-share-trip" class="outline" type="button" hidden>Share trip link</button><ul class="data-list" id="crew"></ul>
-<details id="member-panel" hidden><summary>Invite member</summary><form id="invite">
-<div class="member-fields"><label>Name<input name="name" required maxlength="80" autocomplete="off"></label>
-<label>Mobile number<input name="mobile" type="tel" required minlength="7" maxlength="22" placeholder="+91 98765 43210"></label></div>
-<label>Email address<input name="email" type="email" required maxlength="254"></label>
-<p class="fine">Send an invitation email or share a link yourself. Your friend must verify the invited email.</p>
-<div class="actions"><button class="blue" value="email">Send email invite</button><button class="outline" value="share">Create share link</button></div><p id="invite-status" role="status"></p></form><div id="invite-copy-area" hidden><label>Invitation link<input id="invite-copy-url" readonly></label><button id="copy-invite" type="button" class="outline">Copy invite link</button></div></details><div id="crew-invites" hidden><h4>Invitations and access</h4><ul class="data-list" id="invites"></ul></div>
+<div id="crew-invites" hidden><h4>Invitations and access</h4><ul class="data-list" id="invites"></ul></div>
 </section><p id="real-location-banner" role="status"></p><button id="real-stop-location" type="button" class="outline" hidden>Stop sharing</button><section data-real-screen="map"><button id="real-share-location" class="outline" type="button" aria-pressed="false">Share my location with this trip</button><details id="trip-map-panel" class="map-panel">
 <summary>Live crew map</summary><div class="meeting-card"><h3>Meeting point</h3><p id="saved-pin"></p><a id="map-directions" class="button blue" hidden target="_blank" rel="noopener">Get directions</a></div>
 <div id="trip-map" aria-label="OpenStreetMap trip map"></div>
@@ -64,20 +59,25 @@
 <label>Longitude<input name="lng" type="number" step="any" min="-180" max="180" required></label></div>
 <div class="actions"><button class="blue">Save meeting point</button><button type="button" class="outline" id="remove-pin" hidden>Remove meeting point</button></div></form></details>
 </section><section data-real-screen="bills"><h3>Shared expenses</h3><p class="fine">The trip admin posts confirmed expenses. Each saved bill is split equally across the crew listed at the time.</p>
-<form id="record-expense" hidden>
+<a class="button gold" data-real-go="addexpense">+ Add expense</a>
+<ul class="data-list" id="shared-expenses"></ul><p id="expense-status" class="fine" role="status"></p>
+<h4>Net balances for the latest 100 expenses</h4><ul class="data-list" id="shared-balances"></ul>
+</section>
+<section data-real-screen="invite" hidden><div id="member-panel" hidden><h3>Invite a friend</h3><form id="invite">
+<div class="member-fields"><label>Name<input name="name" required maxlength="80" autocomplete="off"></label>
+<label>Mobile number<input name="mobile" type="tel" required minlength="7" maxlength="22" placeholder="+91 98765 43210"></label></div>
+<label>Email address<input name="email" type="email" required maxlength="254"></label>
+<p class="fine">Send an invitation email or share a link yourself. Your friend must verify the invited email.</p>
+<div class="actions"><button class="blue" value="email">Send email invite</button><button class="outline" value="share">Create share link</button></div><p id="invite-status" role="status"></p></form><div id="invite-copy-area" hidden><label>Invitation link<input id="invite-copy-url" readonly></label><button id="copy-invite" type="button" class="outline">Copy invite link</button></div></div></section><section data-real-screen="addexpense" hidden><h3>Add an expense</h3><p>Enter the total paid. It will be split equally across the current crew.</p><form id="record-expense" hidden>
 <label>Expense <input name="label" required maxlength="80"></label>
 <label>Amount (₹) <input name="amount" type="number" min="0.01" max="1000000" step="0.01" required></label>
 <label>Paid by <select name="payer" required></select></label>
 <button class="gold">Post confirmed expense</button>
-</form>
-<ul class="data-list" id="shared-expenses"></ul><p id="expense-status" class="fine" role="status"></p>
-<h4>Net balances for the latest 100 expenses</h4><ul class="data-list" id="shared-balances"></ul>
-</section>
-<section data-real-screen="plans" hidden><h3>Shared plans</h3><ul id="real-plans" class="data-list"></ul>
+</form></section><section data-real-screen="plans" hidden><h3>Shared plans</h3><ul id="real-plans" class="data-list"></ul>
 <form id="real-plan-form" hidden><label>Plan<input name="title" required maxlength="100"></label><label>Date and time<input name="time" type="datetime-local" required></label><button class="gold">Add plan</button></form></section>
 <section data-real-screen="chat" hidden><h3>Trip chat</h3><ul id="real-messages" class="data-list"></ul><form id="real-chat-form"><label>Message<input name="text" required maxlength="1000"></label><button class="blue">Send message</button></form></section>
 <section data-real-screen="photos" hidden><h3>Trip photos</h3><p>Shared photo uploads are awaiting cloud storage setup.</p></section>
-<section data-real-screen="packing" hidden><h3>Packing</h3><p><progress id="real-pack-progress" max="1" value="0" aria-label="Packing progress"></progress> <span id="real-pack-count"></span></p><ul id="real-packing-items" class="data-list"></ul><form id="real-pack-form"><label>Item<input name="item" maxlength="100" required></label><label>Assigned to<select name="assignee"></select></label><button class="gold">Add item</button></form></section>
+<section data-real-screen="polls" hidden><h3>Ask the crew</h3><p>Vote together on dinner, stops, or where to stay.</p><form id="poll-form" hidden><label>Question<input name="question" maxlength="120" placeholder="Where shall we eat tonight?" required></label><label>Options, one per line<textarea name="options" rows="4" maxlength="404" placeholder="Riverside café&#10;Momos in Old Manali" required></textarea></label><button class="gold">Create poll</button></form><p id="poll-status" role="status"></p><div id="poll-list"></div></section><section data-real-screen="packing" hidden><h3>Packing</h3><p><progress id="real-pack-progress" max="1" value="0" aria-label="Packing progress"></progress> <span id="real-pack-count"></span></p><ul id="real-packing-items" class="data-list"></ul><form id="real-pack-form"><label>Item<input name="item" maxlength="100" required></label><label>Assigned to<select name="assignee"></select></label><button class="gold">Add item</button></form></section>
 <section data-real-screen="wrapup" hidden><h3>Wrap-up</h3><p id="real-wrap-summary">Open Bills to review shared expenses.</p><p>Trip completion and member acknowledgments are not available yet.</p></section>
 <section data-real-screen="settings" hidden><h3>Trip profile</h3><form id="real-profile-form"><label>Display name<input name="name" maxlength="80" required autocomplete="name"></label><button class="outline">Save name</button></form><p id="trip-profile-status" role="status"></p><h3>Permissions</h3>
 <div class="actions"><button type="button" class="outline" id="trip-permission-alerts">Notification permission</button><a class="button outline" data-real-go="map">Location sharing controls</a></div>
@@ -95,7 +95,7 @@
 
 
 <button id="real-add" class="native-fab gold" type="button" hidden aria-label="Add to trip">+</button>
-<dialog id="real-sheet" class="modal glass native-sheet"><h2>Add to trip</h2><div class="native-actions"><a class="button gold" data-real-go="bills">Add expense</a><a class="button outline" data-real-go="plans">Add plan</a><a class="button outline" data-real-go="chat">Message crew</a></div><form method="dialog"><button class="outline">Close</button></form></dialog>
+<dialog id="real-sheet" class="modal glass native-sheet"><h2>Add to trip</h2><div class="native-actions"><a class="button gold" data-real-go="addexpense">Add expense</a><a class="button outline" data-real-go="polls">New poll</a><a class="button outline" data-real-go="invite">Invite friend</a><a class="button outline" data-real-go="plans">Add plan</a><a class="button outline" data-real-go="chat">Message crew</a></div><form method="dialog"><button class="outline">Close</button></form></dialog>
 <dialog id="real-exit" class="modal glass"><h2>Exit Trip Friend?</h2><button id="real-exit-confirm" class="outline">Exit</button><form method="dialog"><button class="outline">Stay</button></form></dialog>
 <script>
 window.tripConnectionTimer = setTimeout(() => {

@@ -75,3 +75,17 @@ test('Admins can revoke exactly one member only on tracked active trips without 
   await assertSucceeds(updateDoc(doc(admin,path('removable')),{memberUids:['admin','another']}));
   await assertFails(getDoc(doc(member,path('removable'))));
 });
+test('Polls are admin-created; members vote only as themselves within the option range',async () => {
+  const admin = account('admin'), member = account('member'), outside = account('outside');
+  const poll = {question:'Dinner?',options:['Momos','Thali'],authorUid:'admin',createdAt:serverTimestamp()};
+  const path = 'trips/open/polls/dinner';
+  await assertFails(setDoc(doc(member,path),{...poll,authorUid:'member'}));
+  await assertSucceeds(setDoc(doc(admin,path),poll));
+  await assertFails(getDoc(doc(outside,path)));
+  await assertFails(setDoc(doc(member,path+'/votes/admin'),{option:0,updatedAt:serverTimestamp()}));
+  await assertFails(setDoc(doc(member,path+'/votes/member'),{option:9,updatedAt:serverTimestamp()}));
+  await assertSucceeds(setDoc(doc(member,path+'/votes/member'),{option:0,updatedAt:serverTimestamp()}));
+  await assertSucceeds(setDoc(doc(member,path+'/votes/member'),{option:1,updatedAt:serverTimestamp()}));
+  await assertFails(setDoc(doc(admin,'trips/closed/polls/blocked'),poll));
+  await assertFails(setDoc(doc(admin,'trips/open/polls/invalid'),{...poll,options:['a','a']}));
+});

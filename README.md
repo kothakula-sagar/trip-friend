@@ -132,3 +132,11 @@ Open **Map** to see labeled crew markers and a list of recent sharers. Find me c
 ### Reference based trip navigation
 
 Wanderlog’s invite-by-email or message flow informed persistent Copy invite link on pending invitations. Life360’s member-first map informed the named pins and crew list. Trip Friend keeps location opt-in and shows only recent positions. Open an existing trip, then return using All trips or Android Back. Test a pending invite by copying its link after refreshing and accepting it with the verified invited address. Verify the Map screen shows the meeting point and directions above the map and recent sharers below it.
+
+## Simple trip workflow in 1.6.0
+
+Sign in once, tap New trip, and name the trip. Open the trip and choose a dedicated screen from Home: Crew and invitations, Add expense, Live map, Trip planner, Group chat, or Polls. Admin and Member roles remain visible. Invite by email or use Create share link; the recipient must verify the invited address before joining. Email-link sending on Spark has a small daily limit, so use the share link if the email cannot be delivered.
+
+Polls allow an admin to post 2–5 options and every verified member to vote once or change their vote. Publish firestore.rules before using polls. Existing trip and financial permissions are preserved. Test with an admin, member, and outsider; the outsider must be denied. Closed trips reject new polls and votes.
+
+Build using GitHub Actions → Build Trip Friend Android. Download TripFriend-test-apk for testing. Signed releases use the existing signing secrets and Publish option. Install the same APK on two phones, join one trip, post a plan, expense and poll, send chat, and verify shared location. Real-device verification of location, installer updates, and persistent sign-in is required.

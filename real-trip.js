@@ -6,8 +6,11 @@ import {setupTripNotifications} from "./trip-notifications.js";
 
 import {renderChat} from "./crew-ui.js";
 
-export function createRealTrip({subscribe,write,patch,erase,identity,openTrip,showList}) {
+import {setupPolls} from "./polls.js";
+
+export function createRealTrip({subscribe,write,vote,patch,erase,identity,openTrip,showList}) {
   let trip, generation = 0, watch, watching = false, plans = [], subscriptions = [], lastWrite, positionBusy = false, queuedPosition;
+  const selectPolls = setupPolls({subscribe,write,vote,identity});
   let routeDepth = 0;
   let profiles = new Map(), messages = [], unread = 0;
   function refreshChat() {
@@ -68,7 +71,7 @@ export function createRealTrip({subscribe,write,patch,erase,identity,openTrip,sh
     const id = trip?.id === target.id ? target.id : null;
     const screen = id ? target.screen : 'trips';
     document.querySelectorAll('[data-real-screen]').forEach(section => {
-      section.hidden = (native || target.id) ? section.dataset.realScreen !== screen : ['chat','photos','packing','wrapup','settings','plans'].includes(section.dataset.realScreen);
+      section.hidden = (native || target.id) ? section.dataset.realScreen !== screen : ['chat','photos','packing','wrapup','settings','plans','polls','invite','addexpense'].includes(section.dataset.realScreen);
     });
     document.querySelectorAll('[data-real-go]').forEach(link => {
       if (trip) link.href = '#trip/'+trip.id+'/'+link.dataset.realGo;
@@ -257,6 +260,7 @@ export function createRealTrip({subscribe,write,patch,erase,identity,openTrip,sh
       subscriptions.forEach(stop => stop());
       subscriptions = [];
       trip = value;
+      selectPolls(trip);
       profiles = new Map(); messages = []; unread = 0;
       refreshChat();
       if (trip) notifications.refresh();
