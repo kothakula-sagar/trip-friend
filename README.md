@@ -140,3 +140,13 @@ Sign in once, tap New trip, and name the trip. Open the trip and choose a dedica
 Polls allow an admin to post 2–5 options and every verified member to vote once or change their vote. Publish firestore.rules before using polls. Existing trip and financial permissions are preserved. Test with an admin, member, and outsider; the outsider must be denied. Closed trips reject new polls and votes.
 
 Build using GitHub Actions → Build Trip Friend Android. Download TripFriend-test-apk for testing. Signed releases use the existing signing secrets and Publish option. Install the same APK on two phones, join one trip, post a plan, expense and poll, send chat, and verify shared location. Real-device verification of location, installer updates, and persistent sign-in is required.
+
+
+### Android layout repair — 1.6.1 (10601)
+- Shared shell mounts bottom tabs and the Add button directly under body. Never nest viewport chrome inside glass cards: backdrop-filter creates a fixed-position containing block in WebView.
+- Reserved scroll space keeps the final field, Save button and tools above bottom navigation. Chat aligns your messages right, wraps long author names and gives the composer an opaque sticky surface.
+- Tabs and Add hide while the soft keyboard reduces the viewport; the composer stays reachable. A routine signed-in status no longer occupies the trip screen.
+- No Firestore rules, permission or financial changes. Photo cloud storage is still unconfigured; this release does not enable uploads.
+- Phone checks: visit every tab with short and long content; scroll to the final field; type/send in chat; dismiss keyboard; rotate; enable large text; verify gesture and three-button navigation insets. Hardware keyboard, TalkBack and Android installer checks remain unverified.
+
+Mobile layout regression: `npm install --no-save --package-lock=false playwright`, `npx playwright install chromium`, `node tests/mobile-layout.cjs`. Uses isolated real-page fixtures at 360, 393 and 430px; checks viewport anchoring, overflow, composer clearance and keyboard hide/restore. GitHub Actions runs this check and saves chat screenshots. These are browser fixture checks, not two-phone acceptance tests.

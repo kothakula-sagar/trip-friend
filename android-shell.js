@@ -18,6 +18,26 @@ window.TripShell = {
     return match ? {id:match[1], screen:match[2]} : {id:null, screen:'trips'};
   }
 };
+// Glass creates a containing block for fixed descendants in Android WebView.
+// Keep viewport chrome directly under body, outside all blurred trip cards.
+(() => {
+  document.querySelectorAll('.native-tabs,.native-fab').forEach(element => {
+    document.body.append(element);
+  });
+  let fullHeight = window.innerHeight;
+  function keyboardLayout() {
+    const viewport = window.visualViewport;
+    const height = viewport?.height || window.innerHeight;
+    const editing = document.activeElement?.matches('input:not([type=checkbox]),textarea,select');
+    if (!editing) fullHeight = Math.max(fullHeight,window.innerHeight,height);
+    const open = Boolean(editing && fullHeight - height > 140);
+    document.documentElement.classList.toggle('keyboard-open',open);
+  }
+  window.visualViewport?.addEventListener('resize',keyboardLayout);
+  window.addEventListener('resize',keyboardLayout);
+  document.addEventListener('focusin',keyboardLayout);
+  document.addEventListener('focusout',() => requestAnimationFrame(keyboardLayout));
+})();
 (() => {
   const capacitor = window.Capacitor;
   if (!capacitor?.isNativePlatform?.() || !document.getElementById('native-title')) return;

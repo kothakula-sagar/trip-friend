@@ -48,6 +48,7 @@ const $ = id => document.getElementById(id);
 function status(message, tone = '') {
   $('status').textContent = message;
   $('status').dataset.tone = tone;
+  $('status').dataset.session = String(message.startsWith('Signed in as '));
 }
 const email = () => auth.currentUser.email;
 const format = new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'});
