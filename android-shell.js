@@ -21,9 +21,11 @@ window.TripShell = {
 // Glass creates a containing block for fixed descendants in Android WebView.
 // Keep viewport chrome directly under body, outside all blurred trip cards.
 (() => {
-  document.querySelectorAll('.native-tabs,.native-fab').forEach(element => {
-    document.body.append(element);
-  });
+  if (window.Capacitor?.isNativePlatform?.() || document.documentElement.classList.contains('native-runtime')) {
+    document.querySelectorAll('.native-tabs,.native-fab').forEach(element => {
+      document.body.append(element);
+    });
+  }
   let fullHeight = window.innerHeight;
   function keyboardLayout() {
     const viewport = window.visualViewport;

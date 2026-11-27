@@ -15,6 +15,7 @@ const page=await browser.newPage();
 let html=fs.readFileSync('trips.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*fonts.googleapis[^>]*>/g,'');
 await page.route('**/trips.html',route=>route.fulfill({contentType:'text/html',body:html}));
 await page.goto('http://127.0.0.1:8177/trips.html');
+await page.evaluate(()=>document.documentElement.className='native-runtime real-runtime trip-focused');
 await page.addScriptTag({url:'http://127.0.0.1:8177/android-shell.js'});
 await page.evaluate(()=>{
  document.documentElement.className='native-runtime real-runtime trip-focused';
